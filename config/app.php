@@ -123,4 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'venue_sheet_id' => env('APP_VENUE_SHEET_ID', '1'),
+
+    'google_credentials_filename' => env('APP_GOOGLE_CREDENTIALS_FILENAME', 'credentials.json'),
+
 ];

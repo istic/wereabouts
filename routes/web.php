@@ -8,3 +8,5 @@ Route::get('/', function () {
 });
 
 Auth::routes();
+
+Route::get('/', [App\Http\Controllers\VenueController::class, 'index'])->name('home');

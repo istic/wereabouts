@@ -9,6 +9,12 @@ use Illuminate\Support\Facades\Redis;
 
 class VenueSheet extends GoogleClient
 {
+
+    protected $sheetID;
+    /**
+     * VenueSheet constructor.
+     */
+
     public function __construct()
     {
         parent::__construct();

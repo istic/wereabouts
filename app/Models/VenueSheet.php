@@ -31,11 +31,10 @@ class VenueSheet extends GoogleClient
 
     public function listVenues()
     {
-        $range = 'Overnight Venue Site List!A:M'; // Adjust the range as needed
-        $cacheKey = 'venue.list' . sha1($range);
+        $cacheKey = 'venue.index';
         if (Redis::exists($cacheKey)) {
             $venue_list = Redis::get($cacheKey);
-            // return json_decode($venue_list, true);
+            return json_decode($venue_list, true);
         }
 
         $sheet = $this->getSheet();
@@ -43,9 +42,8 @@ class VenueSheet extends GoogleClient
             throw new \Exception('Google Sheets service not initialized.');
         }
 
+        $range = 'Overnight Venue Site List!A:M'; // Adjust the range as needed
         $result = $sheet->spreadsheets_values->get($this->sheetID, $range);
-        Redis::set($cacheKey, json_encode($result->getValues()));
-        Redis::expire($cacheKey, 3600); // Cache for 1 hour
         $sites = $result->getValues();
         $headings = array_shift($sites); // Remove the first row as headings
         $headings[0] = 'Venue Name'; // Rename the first heading to 'Venue Name'
@@ -74,6 +72,8 @@ class VenueSheet extends GoogleClient
             $venue['data']['disabled_bathrooms_guess'] = filter_var($venue['Disabled bathrooms?'], FILTER_VALIDATE_BOOL); // Convert to boolean
             $venues[] = $venue;
         }
+        Redis::set($cacheKey, json_encode($venues));
+        Redis::expire($cacheKey, 3600); // Cache for 1 hour
         return $venues;
     }
 }

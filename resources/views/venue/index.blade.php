@@ -3,7 +3,7 @@
 @section('content')
 <div class="container">
   
-    <div class="row"></div>
+    <div class="row">
         <div class="col-md-12 alert alert-primary">
             <h1 class="text-center">Work In Progress!</h1>
             <p class="text-center">This is the first version of this project, with many things left to do.</p>

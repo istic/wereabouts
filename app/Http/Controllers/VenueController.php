@@ -14,8 +14,7 @@ class VenueController extends Controller
     {
         $venueSheet = new VenueSheet();
         $venues =  $venueSheet->listVenues();
-
-        dump($venues); // Debugging line to inspect the venues data
+        $venues = $venueSheet->sortVenuesByName($venues);
 
         return view('venue.index', compact('venues'));
     }

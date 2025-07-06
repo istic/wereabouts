@@ -65,15 +65,24 @@ class VenueSheet extends GoogleClient
             foreach ($headings as $index => $heading) {
                 $venue[$heading] = isset($site[$index]) ? $site[$index] : null;
             }
-            $venue['open'] = $venue_open; // Add 'open' status to each venue
             $venue['data'] = []; // Initialize 'data' as an empty array
+            $venue['data']['open'] = $venue_open; // Add 'open' status to each venue
             $venue['data']['capacity_count'] = (int) filter_var($venue['Capacity'], FILTER_SANITIZE_NUMBER_INT); // Ensure capacity count is an integer
             $venue['data']['public_transport_guess'] = filter_var($venue['Public Transport'], FILTER_VALIDATE_BOOL); // Convert to boolean
             $venue['data']['disabled_bathrooms_guess'] = filter_var($venue['Disabled bathrooms?'], FILTER_VALIDATE_BOOL); // Convert to boolean
             $venues[] = $venue;
         }
+        $venues = $this->sortVenuesByName($venues); // Sort venues by name
         Redis::set($cacheKey, json_encode($venues));
         Redis::expire($cacheKey, 3600); // Cache for 1 hour
+        return $venues;
+    }
+
+    public function sortVenuesByName($venues)
+    {
+        usort($venues, function ($a, $b) {
+            return strcmp($a['Venue Name'], $b['Venue Name']);
+        });
         return $venues;
     }
 }

@@ -52,7 +52,7 @@ class GoogleClient
     $headings[0] = 'Venue Name'; // Rename the first heading to 'Venue Name'
     array_shift($sites); // Remove the second row as it is not needed
 
-    return $sites;
+    return [$headings, $sites];
   }
 
   public function listVenues()
@@ -63,7 +63,7 @@ class GoogleClient
       return json_decode($venue_list, true);
     }
 
-    $sites = $this->getSheetData();
+    list($headings, $sites) = $this->getSheetData();
 
     $venues = [];
     $venue_open = true;

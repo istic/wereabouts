@@ -21,6 +21,12 @@ class ExampleTest extends TestCase
         });
     }
 
+    function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+
     /**
      * A basic test example.
      */
@@ -51,7 +57,7 @@ class FakeGoogleClient extends GoogleClient
 
     protected function getSheetData()
     {
-        return [
+        $data = [
             [
                 "Venue Name" => "Abney Scout and Guide Centre",
                 "Location" => "Cheadle, nr Stockport",
@@ -68,5 +74,6 @@ class FakeGoogleClient extends GoogleClient
                 "Price data (cost + data of recorded cost)" => "£570 for two nights, extra £50 for someone to clean it"
             ]
         ];
+        return [array_keys($data[0]), [array_values($data[0])]];
     }
 }

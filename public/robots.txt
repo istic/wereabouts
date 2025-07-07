@@ -1,2 +1,3 @@
+# Go away little robot. Your indexing powers are unwanted here.
 User-agent: *
-Disallow:
+Disallow: /

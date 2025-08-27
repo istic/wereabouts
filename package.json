@@ -12,7 +12,7 @@
         "axios": "^1.8.2",
         "bootstrap": "^5.3.5",
         "concurrently": "^9.2.1",
-        "laravel-vite-plugin": "^2.0.0",
+        "laravel-vite-plugin": "^2.0.1",
         "sass": "^1.91.0",
         "tailwindcss": "^4.1.12",
         "vite": "^7"

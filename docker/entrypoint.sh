@@ -21,7 +21,7 @@ php artisan view:cache || {
     exit 1
 }
 
-if [ -n "${DB_CONNECTION:-}" ] && [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+if [ -n "${DB_CONNECTION:-}" ] && [ "${RUN_MIGRATIONS:-true}" != "false" ]; then
     echo "[entrypoint] Running migrations..."
     php artisan migrate --force || {
         echo "[entrypoint] ERROR: php artisan migrate --force failed" >&2

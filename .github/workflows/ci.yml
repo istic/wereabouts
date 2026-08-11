@@ -78,6 +78,9 @@ jobs:
       - name: Static analysis
         run: composer stan
 
+      - name: Biome
+        run: npm run lint:check
+
       - name: Run tests
         run: composer test
 

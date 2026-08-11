@@ -72,6 +72,9 @@ jobs:
       - name: Build assets
         run: npm run build
 
+      - name: Biome
+        run: npm run lint:check
+
       - name: Run tests
         run: php artisan test
 

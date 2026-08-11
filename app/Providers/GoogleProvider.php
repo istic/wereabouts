@@ -2,15 +2,12 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-
 use App\Service\Google\GoogleClient;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\ServiceProvider;
 
 class GoogleProvider extends ServiceProvider
 {
-    protected $client;
-
     /**
      * Register services.
      */
@@ -18,7 +15,7 @@ class GoogleProvider extends ServiceProvider
     {
         $this->app->singleton(GoogleClient::class, function (Application $app) {
 
-            return new GoogleClient();
+            return new GoogleClient;
         });
     }
 

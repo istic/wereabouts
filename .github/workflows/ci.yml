@@ -33,6 +33,7 @@ jobs:
         with:
           php-version: '8.4'
           tools: composer:v2
+          extensions: redis,opentelemetry
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -71,8 +72,17 @@ jobs:
       - name: Build assets
         run: npm run build
 
+      - name: Lint
+        run: composer lint:check
+
+      - name: Static analysis
+        run: composer stan
+
+      - name: Biome
+        run: npm run lint:check
+
       - name: Run tests
-        run: php artisan test
+        run: composer test
 
   build-and-push:
     needs: [test]
@@ -128,7 +138,7 @@ jobs:
 
   deploy-staging:
     needs: build-and-push
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.base_ref != 'dependabot-updates'
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-staging

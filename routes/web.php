@@ -1,12 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\VenueController;
 use Illuminate\Support\Facades\Auth;
-
-Route::get('/', function () {
-    return view('welcome');
-});
+use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
-Route::get('/', [App\Http\Controllers\VenueController::class, 'index'])->name('home');
+Route::get('/', [VenueController::class, 'index'])->name('home');

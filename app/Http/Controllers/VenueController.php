@@ -19,7 +19,6 @@ class VenueController extends Controller
     public function index(): View
     {
         $venues = $this->googleSheet->listVenues();
-        $venues = $this->googleSheet->sortVenuesByName($venues);
 
         return view('venue.index', compact('venues'));
     }

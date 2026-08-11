@@ -8,8 +8,6 @@ use Illuminate\Support\ServiceProvider;
 
 class GoogleProvider extends ServiceProvider
 {
-    protected ?GoogleClient $client = null;
-
     /**
      * Register services.
      */

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Service\Google\GoogleClient;
-use Illuminate\Http\Request;
+use Illuminate\Contracts\View\View;
 
 class VenueController extends Controller
 {
@@ -16,25 +16,11 @@ class VenueController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): View
     {
-        $venues =  $this->googleSheet->listVenues();
+        $venues = $this->googleSheet->listVenues();
         $venues = $this->googleSheet->sortVenuesByName($venues);
 
         return view('venue.index', compact('venues'));
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show($venueName)
-    {
-        $venue = $this->googleSheet->getVenueByName($venueName);
-
-        if (!$venue) {
-            abort(404, 'Venue not found');
-        }
-
-        return view('venue.show', compact('venue'));
     }
 }

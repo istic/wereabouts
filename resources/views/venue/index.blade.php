@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-  
+
     <div class="row">
         <div class="col-md-12 alert alert-primary">
             <h1 class="text-center">Work In Progress!</h1>
@@ -39,8 +39,8 @@
                       "Aspects" => ""
                       "Price data (cost + data of recorded cost)" => "£570 for two nights, extra £50 for someone to clean it"
                         --}}
-                  
-                  
+
+
                     <div class="row">
                         <label for="Venue_Location" class="col-sm-5 col-form-label">Location</label>
                         <div class="col-sm-5">

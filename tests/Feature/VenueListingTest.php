@@ -68,8 +68,10 @@ class VenueListingTest extends TestCase
 
         // Each venue is visibly badged with its status, scoped to its own card
         // by asserting the badge markup itself appears after the venue's name.
-        $response->assertSeeInOrder(['Abney Scout and Guide Centre', 'id="Venue_Status" class="badge bg-success">Open'], false);
-        $response->assertSeeInOrder(['Shuttered Hall', 'id="Venue_Status" class="badge bg-secondary">Closed'], false);
+        // The badge id is suffixed with the venue's slug since this partial is
+        // included once per card, and ids must stay unique across the page.
+        $response->assertSeeInOrder(['Abney Scout and Guide Centre', 'id="Venue_Status_abney-scout-and-guide-centre" class="badge bg-success">Open'], false);
+        $response->assertSeeInOrder(['Shuttered Hall', 'id="Venue_Status_shuttered-hall" class="badge bg-secondary">Closed'], false);
     }
 
     public function test_the_venue_page_lowercases_multibyte_venue_names_for_filtering(): void

@@ -17,12 +17,72 @@
             </ul>
         </div>
 </div>
-    <div class="row justify-content-left">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card" id="venue-filters">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Filter venues</h2>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="filter-name" class="form-label">Venue name</label>
+                            <input type="search" id="filter-name" class="form-control" placeholder="Search by name&hellip;">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="filter-location" class="form-label">Location</label>
+                            <input type="search" id="filter-location" class="form-control" placeholder="Search by location&hellip;">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="filter-capacity" class="form-label">Minimum capacity</label>
+                            <input type="number" min="0" id="filter-capacity" class="form-control" placeholder="Any">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="filter-status" class="form-label">Status</label>
+                            <select id="filter-status" class="form-select">
+                                <option value="all" selected>All venues</option>
+                                <option value="open">Open venues only</option>
+                                <option value="closed">Closed venues only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8 d-flex flex-wrap align-items-end column-gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="filter-public-transport">
+                                <label class="form-check-label" for="filter-public-transport">Public transport nearby</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="filter-disabled-bathrooms">
+                                <label class="form-check-label" for="filter-disabled-bathrooms">Accessible bathrooms</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="filter-step-free">
+                                <label class="form-check-label" for="filter-step-free">Step-free access</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span id="filter-count" class="text-muted small"></span>
+                        <button type="button" id="filter-reset" class="btn btn-outline-secondary btn-sm">Reset filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-left" id="venue-list">
       @foreach ($venues as $venue)
-        <div class="col-md-12 mb-4 col-lg-6 col-xl-6">
+        <div class="col-md-12 mb-4 col-lg-6 col-xl-6 venue-card"
+             data-name="{{ strtolower($venue->name) }}"
+             data-location="{{ strtolower($venue->location ?? '') }}"
+             data-capacity="{{ $venue->capacityCount }}"
+             data-open="{{ $venue->open ? '1' : '0' }}"
+             data-public-transport="{{ str_starts_with(strtolower(trim($venue->publicTransport ?? '')), 'y') ? '1' : '0' }}"
+             data-disabled-bathrooms="{{ str_starts_with(strtolower(trim($venue->disabledBathrooms ?? '')), 'y') ? '1' : '0' }}"
+             data-step-free="{{ str_starts_with(strtolower(trim($venue->stepFreeAccess ?? '')), 'y') ? '1' : '0' }}">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <a href="{{ route('venue.show', $venue->slug) }}">{{ $venue->name }}</a>
+                    @unless ($venue->open)
+                        <span class="badge bg-secondary">Closed</span>
+                    @endunless
                 </div>
 
                 <div class="card-body">
@@ -31,6 +91,9 @@
             </div>
         </div>
       @endforeach
+      <div id="venue-empty-state" class="col-md-12 text-center text-muted py-5 d-none">
+          No venues match your filters.
+      </div>
     </div>
 </div>
 @endsection

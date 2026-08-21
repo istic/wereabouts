@@ -35,6 +35,38 @@ class VenueListingTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_the_venue_page_renders_a_filter_bar_and_data_attributes_for_filtering(): void
+    {
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
+            $this->rawVenueRow('Abney Scout and Guide Centre', capacity: 'sleeps 32'),
+            ['Closed Venues'],
+            $this->rawVenueRow('Shuttered Hall'),
+        ]));
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+
+        // Filter controls for name, location, capacity, status, and the
+        // Yes/No accessibility fields (issues #5, #6, #7).
+        $response->assertSee('id="filter-name"', false);
+        $response->assertSee('id="filter-location"', false);
+        $response->assertSee('id="filter-capacity"', false);
+        $response->assertSee('id="filter-status"', false);
+        $response->assertSee('id="filter-public-transport"', false);
+        $response->assertSee('id="filter-disabled-bathrooms"', false);
+        $response->assertSee('id="filter-step-free"', false);
+
+        // Each venue card carries the data attributes the client-side filter reads.
+        $response->assertSee('data-name="abney scout and guide centre"', false);
+        $response->assertSee('data-capacity="32"', false);
+        $response->assertSee('data-open="1"', false);
+        $response->assertSee('data-open="0"', false);
+
+        // A closed venue is visibly badged as such.
+        $response->assertSeeInOrder(['Shuttered Hall', 'Closed'], false);
+    }
+
     public function test_list_venues_skips_rows_with_no_venue_name(): void
     {
         $client = new FakeGoogleClient([

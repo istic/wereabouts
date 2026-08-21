@@ -1,4 +1,10 @@
 <div class="row">
+    <label for="Venue_Status" class="col-sm-5 col-form-label">Status</label>
+    <div class="col-sm-5">
+      <span id="Venue_Status" class="badge {{ $venue->open ? 'bg-success' : 'bg-secondary' }}">{{ $venue->open ? 'Open' : 'Closed' }}</span>
+    </div>
+</div>
+<div class="row">
     <label for="Venue_Location" class="col-sm-5 col-form-label">Location</label>
     <div class="col-sm-5">
       <a id="Venue_Location" target="_blank" rel="noopener noreferrer" href="https://maps.google.com/?q={{ urlencode($venue->name . " " . $venue->location) }}">{{ $venue->location }}</a>

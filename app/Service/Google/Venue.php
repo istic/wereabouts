@@ -67,7 +67,10 @@ readonly class Venue
     private static function extractWebsite(?string $name): ?string
     {
         $name = trim($name ?? '');
-        if (! preg_match('#^(https?://|www\.)\S+$#i', $name, $match)) {
+        // Matches the same URL body as auto_link()'s matcher, anchored to the
+        // whole string so a detected website is always the string auto_link()
+        // would render as one complete link, not a truncated prefix of it.
+        if (! preg_match('#^(https?://|www\.)[^\s()<>;]+\w$#i', $name, $match)) {
             return null;
         }
 

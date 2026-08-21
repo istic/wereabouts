@@ -22,4 +22,16 @@ class VenueController extends Controller
 
         return view('venue.index', compact('venues'));
     }
+
+    /**
+     * Display a single venue.
+     */
+    public function show(string $slug): View
+    {
+        $venue = $this->googleSheet->findVenueBySlug($slug);
+
+        abort_if(! $venue, 404);
+
+        return view('venue.show', compact('venue'));
+    }
 }

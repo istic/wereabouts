@@ -5,6 +5,7 @@ namespace App\Service\Google;
 use Google\Client;
 use Google\Service\Sheets;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
 class GoogleClient
 {
@@ -57,7 +58,7 @@ class GoogleClient
      */
     public function listVenues(): array
     {
-        $cacheKey = 'venue.index';
+        $cacheKey = 'venue.index.v2'; // Bump this suffix whenever the cached venue shape changes
         if (Redis::exists($cacheKey)) {
             $venue_list = Redis::get($cacheKey);
             $cached = json_decode($venue_list, true);
@@ -89,13 +90,47 @@ class GoogleClient
             $venue['data']['capacity_count'] = (int) filter_var($venue['Capacity'], FILTER_SANITIZE_NUMBER_INT); // Ensure capacity count is an integer
             $venue['data']['public_transport_guess'] = filter_var($venue['Public Transport'], FILTER_VALIDATE_BOOL); // Convert to boolean
             $venue['data']['disabled_bathrooms_guess'] = filter_var($venue['Disabled bathrooms?'], FILTER_VALIDATE_BOOL); // Convert to boolean
+            $venue['data']['slug'] = Str::slug($venue['Venue Name']); // Slug used to link to the venue's own page
             $venues[] = $venue;
         }
         $venues = $this->sortVenuesByName($venues); // Sort venues by name
+        $venues = $this->disambiguateSlugs($venues); // Ensure slugs are unique even if venue names collide
         Redis::set($cacheKey, json_encode($venues));
         Redis::expire($cacheKey, 3600); // Cache for 1 hour
 
         return $venues;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $venues
+     * @return array<int, array<string, mixed>>
+     */
+    protected function disambiguateSlugs(array $venues): array
+    {
+        $slugCounts = [];
+        foreach ($venues as &$venue) {
+            $slug = $venue['data']['slug'];
+            $slugCounts[$slug] = ($slugCounts[$slug] ?? 0) + 1;
+            if ($slugCounts[$slug] > 1) {
+                $venue['data']['slug'] = $slug.'-'.$slugCounts[$slug];
+            }
+        }
+
+        return $venues;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findVenueBySlug(string $slug): ?array
+    {
+        foreach ($this->listVenues() as $venue) {
+            if ($venue['data']['slug'] === $slug) {
+                return $venue;
+            }
+        }
+
+        return null;
     }
 
     /**

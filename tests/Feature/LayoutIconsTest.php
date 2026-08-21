@@ -34,4 +34,14 @@ class LayoutIconsTest extends TestCase
         $response->assertSee('rel="apple-touch-icon"', false);
         $response->assertSee('rel="manifest"', false);
     }
+
+    public function test_the_navbar_brand_shows_the_favicon(): void
+    {
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([]));
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSeeInOrder(['navbar-brand', 'favicon', config('app.name')], false);
+    }
 }

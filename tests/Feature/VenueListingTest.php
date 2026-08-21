@@ -35,6 +35,60 @@ class VenueListingTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_the_venue_page_renders_a_filter_bar_and_data_attributes_for_filtering(): void
+    {
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
+            $this->rawVenueRow('Abney Scout and Guide Centre', capacity: 'sleeps 32'),
+            ['Closed Venues'],
+            $this->rawVenueRow('Shuttered Hall'),
+        ]));
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+
+        // Filter controls for name, location, capacity, status, and the
+        // Yes/No accessibility fields (issues #5, #6, #7).
+        $response->assertSee('id="filter-name"', false);
+        $response->assertSee('id="filter-location"', false);
+        $response->assertSee('id="filter-capacity"', false);
+        $response->assertSee('id="filter-status"', false);
+        $response->assertSee('id="filter-public-transport"', false);
+        $response->assertSee('id="filter-disabled-bathrooms"', false);
+        $response->assertSee('id="filter-step-free"', false);
+
+        // Each venue card carries the data attributes the client-side filter reads.
+        $response->assertSee('data-name="abney scout and guide centre"', false);
+        $response->assertSee('data-capacity="32"', false);
+        $response->assertSee('data-open="1"', false);
+        $response->assertSee('data-open="0"', false);
+        $response->assertSee('data-public-transport="1"', false); // fixture's "Yes"
+        $response->assertSee('data-disabled-bathrooms="0"', false); // fixture's "No"
+        $response->assertSee('data-step-free="1"', false); // fixture's "All spaces"
+
+        // Each venue is visibly badged with its status, scoped to its own card
+        // by asserting the badge markup itself appears after the venue's name.
+        // The badge id is suffixed with the venue's slug since this partial is
+        // included once per card, and ids must stay unique across the page.
+        $response->assertSeeInOrder(['Abney Scout and Guide Centre', 'id="Venue_Status_abney-scout-and-guide-centre" class="badge bg-success">Open'], false);
+        $response->assertSeeInOrder(['Shuttered Hall', 'id="Venue_Status_shuttered-hall" class="badge bg-secondary">Closed'], false);
+    }
+
+    public function test_the_venue_page_lowercases_multibyte_venue_names_for_filtering(): void
+    {
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
+            $this->rawVenueRow('Café Union', location: 'Dún Laoghaire'),
+        ]));
+
+        $response = $this->get('/');
+
+        // Str::lower() is multibyte-aware (unlike strtolower()), so the
+        // data-name/data-location attributes the JS filter matches against
+        // must lowercase accented characters correctly.
+        $response->assertSee('data-name="café union"', false);
+        $response->assertSee('data-location="dún laoghaire"', false);
+    }
+
     public function test_list_venues_skips_rows_with_no_venue_name(): void
     {
         $client = new FakeGoogleClient([
@@ -135,11 +189,11 @@ class VenueListingTest extends TestCase
     /**
      * @return array<int, string>
      */
-    protected function rawVenueRow(string $name, string $capacity = 'sleeps 10'): array
+    protected function rawVenueRow(string $name, string $capacity = 'sleeps 10', string $location = 'Location'): array
     {
         return [
             $name,
-            'Location',
+            $location,
             $capacity,
             'Types of Spaces',
             'Yes',

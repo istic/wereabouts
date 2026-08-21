@@ -15,7 +15,7 @@ class VenueListingTest extends TestCase
     {
         parent::setUp();
 
-        Redis::del('venue.index.v2', 'venue.index.v2.stale');
+        Redis::del('venue.index.v3', 'venue.index.v3.stale');
     }
 
     protected function tearDown(): void
@@ -100,6 +100,24 @@ class VenueListingTest extends TestCase
         $second = $client->listVenues();
 
         $this->assertEquals($first, $second);
+    }
+
+    public function test_list_venues_refetches_when_the_cache_is_in_an_old_incompatible_shape(): void
+    {
+        // Simulates a cache entry written by a previous deploy that cached
+        // venues as raw sheet-keyed arrays instead of Venue::toArray().
+        Redis::set('venue.index.v3', json_encode([
+            ['Venue Name' => 'Stale Shape Venue', 'data' => ['open' => true]],
+        ]));
+
+        $client = new FakeGoogleClient([
+            $this->rawVenueRow('Fresh Venue'),
+        ]);
+
+        $venues = $client->listVenues();
+
+        $this->assertCount(1, $venues);
+        $this->assertSame('Fresh Venue', $venues[0]->name);
     }
 
     public function test_sort_venues_by_name_orders_venues_alphabetically(): void

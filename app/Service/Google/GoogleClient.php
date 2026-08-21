@@ -67,8 +67,8 @@ class GoogleClient
      */
     public function listVenues(): array
     {
-        $cacheKey = 'venue.index.v2'; // Bump this suffix whenever the cached venue shape changes
-        $staleCacheKey = 'venue.index.v2.stale';
+        $cacheKey = 'venue.index.v3'; // Bump this suffix whenever the cached venue shape changes
+        $staleCacheKey = 'venue.index.v3.stale';
 
         $cached = $this->readVenueCache($cacheKey);
         if ($cached !== null) {
@@ -134,7 +134,16 @@ class GoogleClient
             return null;
         }
 
-        return array_map(fn (array $venue) => Venue::fromArray($venue), $decoded);
+        try {
+            return array_map(fn (array $venue) => Venue::fromArray($venue), $decoded);
+        } catch (\Throwable $e) {
+            Log::warning('Venue cache did not match the expected Venue shape, ignoring.', [
+                'cache_key' => $cacheKey,
+                'exception' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

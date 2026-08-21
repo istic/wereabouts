@@ -58,7 +58,7 @@ class GoogleClient
      */
     public function listVenues(): array
     {
-        $cacheKey = 'venue.index';
+        $cacheKey = 'venue.index.v2'; // Bump this suffix whenever the cached venue shape changes
         if (Redis::exists($cacheKey)) {
             $venue_list = Redis::get($cacheKey);
             $cached = json_decode($venue_list, true);
@@ -94,8 +94,27 @@ class GoogleClient
             $venues[] = $venue;
         }
         $venues = $this->sortVenuesByName($venues); // Sort venues by name
+        $venues = $this->disambiguateSlugs($venues); // Ensure slugs are unique even if venue names collide
         Redis::set($cacheKey, json_encode($venues));
         Redis::expire($cacheKey, 3600); // Cache for 1 hour
+
+        return $venues;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $venues
+     * @return array<int, array<string, mixed>>
+     */
+    protected function disambiguateSlugs(array $venues): array
+    {
+        $slugCounts = [];
+        foreach ($venues as &$venue) {
+            $slug = $venue['data']['slug'];
+            $slugCounts[$slug] = ($slugCounts[$slug] ?? 0) + 1;
+            if ($slugCounts[$slug] > 1) {
+                $venue['data']['slug'] = $slug.'-'.$slugCounts[$slug];
+            }
+        }
 
         return $venues;
     }

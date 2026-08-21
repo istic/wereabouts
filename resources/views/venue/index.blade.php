@@ -59,7 +59,7 @@
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-3">
-                        <span id="filter-count" class="text-muted small"></span>
+                        <span id="filter-count" class="text-muted small" role="status" aria-live="polite" aria-atomic="true">Showing {{ count($venues) }} of {{ count($venues) }} venues</span>
                         <button type="button" id="filter-reset" class="btn btn-outline-secondary btn-sm">Reset filters</button>
                     </div>
                 </div>
@@ -70,19 +70,16 @@
     <div class="row justify-content-left" id="venue-list">
       @foreach ($venues as $venue)
         <div class="col-md-12 mb-4 col-lg-6 col-xl-6 venue-card"
-             data-name="{{ strtolower($venue->name) }}"
-             data-location="{{ strtolower($venue->location ?? '') }}"
+             data-name="{{ \Illuminate\Support\Str::lower($venue->name) }}"
+             data-location="{{ \Illuminate\Support\Str::lower($venue->location ?? '') }}"
              data-capacity="{{ $venue->capacityCount }}"
              data-open="{{ $venue->open ? '1' : '0' }}"
              data-public-transport="{{ str_starts_with(strtolower(trim($venue->publicTransport ?? '')), 'y') ? '1' : '0' }}"
              data-disabled-bathrooms="{{ str_starts_with(strtolower(trim($venue->disabledBathrooms ?? '')), 'y') ? '1' : '0' }}"
              data-step-free="{{ str_starts_with(strtolower(trim($venue->stepFreeAccess ?? '')), 'y') ? '1' : '0' }}">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header">
                     <a href="{{ route('venue.show', $venue->slug) }}">{{ $venue->name }}</a>
-                    @unless ($venue->open)
-                        <span class="badge bg-secondary">Closed</span>
-                    @endunless
                 </div>
 
                 <div class="card-body">
@@ -91,7 +88,7 @@
             </div>
         </div>
       @endforeach
-      <div id="venue-empty-state" class="col-md-12 text-center text-muted py-5 d-none">
+      <div id="venue-empty-state" class="col-md-12 text-center text-muted py-5 d-none" role="status">
           No venues match your filters.
       </div>
     </div>

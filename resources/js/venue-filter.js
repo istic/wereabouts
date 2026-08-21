@@ -80,13 +80,8 @@ function initVenueFilters() {
             }
         }
 
-        if (emptyState) {
-            emptyState.classList.toggle('d-none', visibleCount !== 0);
-        }
-
-        if (countLabel) {
-            countLabel.textContent = `Showing ${visibleCount} of ${cards.length} venues`;
-        }
+        emptyState.classList.toggle('d-none', visibleCount !== 0);
+        countLabel.textContent = `Showing ${visibleCount} of ${cards.length} venues`;
     }
 
     for (const input of inputs) {
@@ -94,18 +89,16 @@ function initVenueFilters() {
         input.addEventListener(eventName, applyFilters);
     }
 
-    if (resetButton) {
-        resetButton.addEventListener('click', () => {
-            nameInput.value = '';
-            locationInput.value = '';
-            capacityInput.value = '';
-            statusSelect.value = 'open';
-            publicTransportCheckbox.checked = false;
-            disabledBathroomsCheckbox.checked = false;
-            stepFreeCheckbox.checked = false;
-            applyFilters();
-        });
-    }
+    resetButton.addEventListener('click', () => {
+        nameInput.value = '';
+        locationInput.value = '';
+        capacityInput.value = '';
+        statusSelect.value = 'open';
+        publicTransportCheckbox.checked = false;
+        disabledBathroomsCheckbox.checked = false;
+        stepFreeCheckbox.checked = false;
+        applyFilters();
+    });
 
     applyFilters();
 }

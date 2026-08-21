@@ -69,9 +69,15 @@ async function glyphLayer(group, layer) {
     }
 
     const originalSvg = await fs.readFile(imagePath, 'utf-8');
-    const pathMatch = originalSvg.match(/<path d="([^"]+)"/);
+    // Source glyphs may be built from multiple disjoint <path> elements (e.g.
+    // a sword icon's blade, hilt, and decorative bars). SVG's `d` attribute
+    // natively supports multiple subpaths in one string, so combine every
+    // path's `d` value into a single string joined by spaces.
+    const combinedPathData = [...originalSvg.matchAll(/<path d="([^"]+)"/g)]
+        .map((match) => match[1])
+        .join(' ');
 
-    if (!pathMatch) {
+    if (!combinedPathData) {
         return null;
     }
 
@@ -108,7 +114,7 @@ async function glyphLayer(group, layer) {
                     </feMerge>
                 </filter>
             </defs>
-            <path d="${pathMatch[1]}" fill="white" fill-opacity="${layerOpacity}" filter="url(#liquidGlass)" />
+            <path d="${combinedPathData}" fill="white" fill-opacity="${layerOpacity}" filter="url(#liquidGlass)" />
         </svg>
     `;
 

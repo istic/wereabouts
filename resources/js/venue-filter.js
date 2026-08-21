@@ -42,7 +42,7 @@ function initVenueFilters() {
             return false;
         }
 
-        const minCapacity = Number.parseInt(capacityInput.value, 10);
+        const minCapacity = Number.parseFloat(capacityInput.value);
         if (!Number.isNaN(minCapacity) && Number.parseInt(card.dataset.capacity, 10) < minCapacity) {
             return false;
         }

@@ -74,9 +74,9 @@
              data-location="{{ \Illuminate\Support\Str::lower($venue->location ?? '') }}"
              data-capacity="{{ $venue->capacityCount }}"
              data-open="{{ $venue->open ? '1' : '0' }}"
-             data-public-transport="{{ str_starts_with(strtolower(trim($venue->publicTransport ?? '')), 'y') ? '1' : '0' }}"
-             data-disabled-bathrooms="{{ str_starts_with(strtolower(trim($venue->disabledBathrooms ?? '')), 'y') ? '1' : '0' }}"
-             data-step-free="{{ str_starts_with(strtolower(trim($venue->stepFreeAccess ?? '')), 'y') ? '1' : '0' }}">
+             data-public-transport="{{ venue_sheet_flag($venue->publicTransport) ? '1' : '0' }}"
+             data-disabled-bathrooms="{{ venue_sheet_flag($venue->disabledBathrooms) ? '1' : '0' }}"
+             data-step-free="{{ venue_sheet_flag($venue->stepFreeAccess, ['y', 'all']) ? '1' : '0' }}">
             <div class="card">
                 <div class="card-header">
                     <a href="{{ route('venue.show', $venue->slug) }}">{{ $venue->name }}</a>

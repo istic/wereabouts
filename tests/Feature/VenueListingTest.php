@@ -62,6 +62,9 @@ class VenueListingTest extends TestCase
         $response->assertSee('data-capacity="32"', false);
         $response->assertSee('data-open="1"', false);
         $response->assertSee('data-open="0"', false);
+        $response->assertSee('data-public-transport="1"', false); // fixture's "Yes"
+        $response->assertSee('data-disabled-bathrooms="0"', false); // fixture's "No"
+        $response->assertSee('data-step-free="1"', false); // fixture's "All spaces"
 
         // Each venue is visibly badged with its status, scoped to its own card
         // by asserting the badge markup itself appears after the venue's name.

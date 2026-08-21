@@ -1,5 +1,24 @@
 <?php
 
+/**
+ * Best-effort read of a free-text sheet cell as a yes/no flag, matching if
+ * the (trimmed, lowercased) value starts with any of the given prefixes.
+ *
+ * @param  array<int, string>  $truthyPrefixes
+ */
+function venue_sheet_flag(?string $value, array $truthyPrefixes = ['y']): bool
+{
+    $normalized = strtolower(trim($value ?? ''));
+
+    foreach ($truthyPrefixes as $prefix) {
+        if (str_starts_with($normalized, $prefix)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function auto_link(?string $str, string $type = 'both', bool $popup = false): string
 {
     $str = $str ?? '';

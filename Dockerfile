@@ -5,6 +5,8 @@ RUN npm ci
 COPY resources resources
 COPY vite.config.js ./
 COPY public public
+ARG APP_ENV=production
+ENV APP_ENV=$APP_ENV
 RUN npm run build
 
 FROM php:8.5-fpm-alpine

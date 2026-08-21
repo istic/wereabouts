@@ -13,7 +13,7 @@ class LayoutIconsTest extends TestCase
     {
         parent::setUp();
 
-        Redis::del('venue.index.v3', 'venue.index.v3.stale');
+        Redis::del('venue.index.v4', 'venue.index.v4.stale');
     }
 
     protected function tearDown(): void

@@ -4,6 +4,14 @@
       <span id="Venue_Status_{{ $venue->slug }}" class="badge {{ $venue->open ? 'bg-success' : 'bg-secondary' }}">{{ $venue->open ? 'Open' : 'Closed' }}</span>
     </div>
 </div>
+@if($venue->website)
+<div class="row">
+    <label for="Venue_Website_{{ $venue->slug }}" class="col-sm-5 col-form-label">Website</label>
+    <div class="col-sm-5">
+      <span id="Venue_Website_{{ $venue->slug }}">{!! auto_link($venue->website, popup: true) !!}</span>
+    </div>
+</div>
+@endif
 <div class="row">
     <label for="Venue_Location_{{ $venue->slug }}" class="col-sm-5 col-form-label">Location</label>
     <div class="col-sm-5">

@@ -67,8 +67,8 @@ class GoogleClient
      */
     public function listVenues(): array
     {
-        $cacheKey = 'venue.index.v3'; // Bump this suffix whenever the cached venue shape changes
-        $staleCacheKey = 'venue.index.v3.stale';
+        $cacheKey = 'venue.index.v4'; // Bump this suffix whenever the cached venue shape changes
+        $staleCacheKey = 'venue.index.v4.stale';
 
         $cached = $this->readVenueCache($cacheKey);
         if ($cached !== null) {

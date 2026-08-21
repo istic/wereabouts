@@ -8,6 +8,7 @@ readonly class Venue
 {
     public function __construct(
         public string $name,
+        public ?string $website,
         public ?string $location,
         public ?string $capacity,
         public int $capacityCount,
@@ -40,6 +41,7 @@ readonly class Venue
 
         return new self(
             name: $values['Venue Name'],
+            website: self::extractWebsite($values['Venue Name']),
             location: $values['Location'] ?? null,
             capacity: $values['Capacity'] ?? null,
             capacityCount: (int) filter_var($values['Capacity'] ?? '', FILTER_SANITIZE_NUMBER_INT),
@@ -56,6 +58,25 @@ readonly class Venue
             open: $open,
             slug: Str::slug($values['Venue Name']),
         );
+    }
+
+    /**
+     * The "Venue Name" column is sometimes filled in with a URL instead of
+     * an actual name. When that happens, surface it as the venue's website.
+     */
+    private static function extractWebsite(?string $name): ?string
+    {
+        $name = trim($name ?? '');
+        // Matches the same URL body as auto_link()'s matcher, anchored to the
+        // whole string so a detected website is always the string auto_link()
+        // would render as one complete link, not a truncated prefix of it.
+        if (! preg_match('#^(https?://|www\.)[^\s()<>;]+\w$#i', $name, $match)) {
+            return null;
+        }
+
+        $prefix = $match[1];
+
+        return (str_contains($prefix, '/') ? '' : 'http://').$name;
     }
 
     /**

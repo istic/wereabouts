@@ -14,7 +14,7 @@ class VenueListingTest extends TestCase
     {
         parent::setUp();
 
-        Redis::del('venue.index.v3', 'venue.index.v3.stale');
+        Redis::del('venue.index.v4', 'venue.index.v4.stale');
     }
 
     protected function tearDown(): void
@@ -159,7 +159,7 @@ class VenueListingTest extends TestCase
     {
         // Simulates a cache entry written by a previous deploy that cached
         // venues as raw sheet-keyed arrays instead of Venue::toArray().
-        Redis::set('venue.index.v3', json_encode([
+        Redis::set('venue.index.v4', json_encode([
             ['Venue Name' => 'Stale Shape Venue', 'data' => ['open' => true]],
         ]));
 
@@ -171,6 +171,33 @@ class VenueListingTest extends TestCase
 
         $this->assertCount(1, $venues);
         $this->assertSame('Fresh Venue', $venues[0]->name);
+    }
+
+    public function test_list_venues_exposes_a_url_venue_name_as_its_website(): void
+    {
+        $client = new FakeGoogleClient([
+            $this->rawVenueRow('https://example.com/venue'),
+            $this->rawVenueRow('www.example.org'),
+            $this->rawVenueRow('Ordinary Venue Name'),
+        ]);
+
+        $venues = collect($client->listVenues());
+
+        $this->assertSame('https://example.com/venue', $venues->firstWhere('name', 'https://example.com/venue')->website);
+        $this->assertSame('http://www.example.org', $venues->firstWhere('name', 'www.example.org')->website);
+        $this->assertNull($venues->firstWhere('name', 'Ordinary Venue Name')->website);
+    }
+
+    public function test_the_venue_details_render_a_website_link_when_the_name_is_a_url(): void
+    {
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
+            $this->rawVenueRow('https://example.com/venue'),
+        ]));
+
+        $response = $this->get('/');
+
+        $response->assertSee('Website', false);
+        $response->assertSee('href="https://example.com/venue"', false);
     }
 
     public function test_sort_venues_by_name_orders_venues_alphabetically(): void

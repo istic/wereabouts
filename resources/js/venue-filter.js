@@ -99,7 +99,7 @@ function initVenueFilters() {
             nameInput.value = '';
             locationInput.value = '';
             capacityInput.value = '';
-            statusSelect.value = 'all';
+            statusSelect.value = 'open';
             publicTransportCheckbox.checked = false;
             disabledBathroomsCheckbox.checked = false;
             stepFreeCheckbox.checked = false;

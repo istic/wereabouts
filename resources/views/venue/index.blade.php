@@ -38,8 +38,8 @@
                         <div class="col-md-4">
                             <label for="filter-status" class="form-label">Status</label>
                             <select id="filter-status" class="form-select">
-                                <option value="all" selected>All venues</option>
-                                <option value="open">Open venues only</option>
+                                <option value="all">All venues</option>
+                                <option value="open" selected>Open venues only</option>
                                 <option value="closed">Closed venues only</option>
                             </select>
                         </div>

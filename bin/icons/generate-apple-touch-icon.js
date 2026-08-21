@@ -70,14 +70,19 @@ async function glyphLayer(group, layer) {
 
     const originalSvg = await fs.readFile(imagePath, 'utf-8');
     // Source glyphs may be built from multiple disjoint <path> elements (e.g.
-    // a sword icon's blade, hilt, and decorative bars). SVG's `d` attribute
-    // natively supports multiple subpaths in one string, so combine every
-    // path's `d` value into a single string joined by spaces.
-    const combinedPathData = [...originalSvg.matchAll(/<path d="([^"]+)"/g)]
-        .map((match) => match[1])
-        .join(' ');
+    // a sword icon's blade, hilt, and decorative bars). Each path's `d` value
+    // is kept as its own separate <path> element (rather than merged into one
+    // combined `d` string): a leading `m`/`M` in a `d` string is only treated
+    // as absolute when it's the very first command, so concatenating strings
+    // would corrupt the position of every subpath after the first. Merging
+    // into a single <path> also applies one shared fill-rule across all
+    // shapes, producing unintended cutouts where overlapping shapes have
+    // different winding directions. Keeping them as separate <path> elements
+    // (sharing a fill via the wrapping <g>) avoids both problems.
+    const glyphPaths = [...originalSvg.matchAll(/<path d="([^"]+)"/g)]
+        .map((match) => match[1]);
 
-    if (!combinedPathData) {
+    if (glyphPaths.length === 0) {
         return null;
     }
 
@@ -114,7 +119,9 @@ async function glyphLayer(group, layer) {
                     </feMerge>
                 </filter>
             </defs>
-            <path d="${combinedPathData}" fill="white" fill-opacity="${layerOpacity}" filter="url(#liquidGlass)" />
+            <g fill="white" fill-opacity="${layerOpacity}" filter="url(#liquidGlass)">
+                ${glyphPaths.map((d) => `<path d="${d}"/>`).join('\n                ')}
+            </g>
         </svg>
     `;
 

@@ -2,6 +2,7 @@ FROM node:26-alpine AS node-deps
 WORKDIR /var/www/html
 COPY package.json package-lock.json ./
 RUN npm ci
+COPY bin bin
 COPY resources resources
 COPY vite.config.js ./
 COPY public public

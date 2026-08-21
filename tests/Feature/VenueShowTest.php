@@ -49,6 +49,72 @@ class VenueShowTest extends TestCase
     }
 }
 
+class VenueShowMissingColumnsTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        app()->bind(GoogleClient::class, function () {
+            return new FakeShortRowGoogleClient;
+        });
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+
+    public function test_venue_page_renders_when_trailing_columns_are_missing(): void
+    {
+        $response = $this->get(route('venue.show', 'bare-bones-venue'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Bare Bones Venue');
+    }
+}
+
+class FakeShortRowGoogleClient extends GoogleClient
+{
+    public function __construct()
+    {
+        $this->sheetID = 'fake_sheet_id';
+    }
+
+    protected function getSheet(): Sheets
+    {
+        return Mockery::mock(Sheets::class);
+    }
+
+    protected function getSheetData(): array
+    {
+        $headings = [
+            'Venue Name',
+            'Location',
+            'Capacity',
+            'Types of Spaces',
+            'Public Transport',
+            'Step free access',
+            'Disabled bathrooms?',
+            'Internet?',
+            'Kitchen',
+            'Issues',
+            'Further description of indoor spaces',
+            'Aspects',
+            'Price data (cost + data of recorded cost)',
+        ];
+
+        // A row shorter than $headings, as happens when trailing sheet
+        // columns (like Aspects) are left blank, leaving those fields null.
+        $sites = [
+            ['Bare Bones Venue', 'Nowhere'],
+        ];
+
+        return [$headings, $sites];
+    }
+}
+
 class FakeVenueGoogleClient extends GoogleClient
 {
     public function __construct()

@@ -61,7 +61,7 @@
 <div class="row">
     <label for="Venue_Aspects" class="col-sm-5 col-form-label">Aspects</label>
     <div class="col-sm-5">
-      <span id="Venue_Aspects">{!! auto_link($venue['Aspects']) !!}</span>
+      <span id="Venue_Aspects">{!! auto_link($venue['Aspects'] ?? '') !!}</span>
     </div>
 </div>
 <div class="row">

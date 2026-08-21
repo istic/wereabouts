@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Service\Google\GoogleClient;
 use Illuminate\Contracts\View\View;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class VenueController extends Controller
 {
@@ -31,9 +30,7 @@ class VenueController extends Controller
     {
         $venue = $this->googleSheet->findVenueBySlug($slug);
 
-        if (! $venue) {
-            throw new NotFoundHttpException('Venue not found.');
-        }
+        abort_if(! $venue, 404);
 
         return view('venue.show', compact('venue'));
     }

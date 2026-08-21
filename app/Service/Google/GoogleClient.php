@@ -3,9 +3,12 @@
 namespace App\Service\Google;
 
 use Google\Client;
+use Google\Service\Exception as GoogleServiceException;
 use Google\Service\Sheets;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class GoogleClient
 {
@@ -44,8 +47,18 @@ class GoogleClient
         $sheet = $this->getSheet();
 
         $range = 'Overnight Venue Site List!A:M'; // Adjust the range as needed
-        $result = $sheet->spreadsheets_values->get($this->sheetID, $range);
-        $sites = $result->getValues();
+
+        try {
+            $result = $sheet->spreadsheets_values->get($this->sheetID, $range);
+        } catch (GoogleServiceException $e) {
+            throw new RuntimeException("Failed to fetch venue sheet '{$this->sheetID}' (range {$range}): {$e->getMessage()}", previous: $e);
+        }
+
+        $sites = $result->getValues() ?? [];
+        if (count($sites) < 2) {
+            throw new RuntimeException("Venue sheet '{$this->sheetID}' returned fewer than 2 rows (expected a heading row and a spacer row); the sheet layout may have changed.");
+        }
+
         $headings = array_shift($sites); // Remove the first row as headings
         $headings[0] = 'Venue Name'; // Rename the first heading to 'Venue Name'
         array_shift($sites); // Remove the second row as it is not needed
@@ -59,14 +72,27 @@ class GoogleClient
     public function listVenues(): array
     {
         $cacheKey = 'venue.index.v2'; // Bump this suffix whenever the cached venue shape changes
-        if (Redis::exists($cacheKey)) {
-            $venue_list = Redis::get($cacheKey);
-            $cached = json_decode($venue_list, true);
+        $staleCacheKey = 'venue.index.v2.stale';
 
-            return is_array($cached) ? $cached : [];
+        $cached = $this->readVenueCache($cacheKey);
+        if ($cached !== null) {
+            return $cached;
         }
 
-        [$headings, $sites] = $this->getSheetData();
+        try {
+            [$headings, $sites] = $this->getSheetData();
+        } catch (RuntimeException $e) {
+            Log::error('Failed to refresh venue list from Google Sheets, falling back to stale cache if available.', [
+                'exception' => $e->getMessage(),
+            ]);
+
+            $stale = $this->readVenueCache($staleCacheKey);
+            if ($stale !== null) {
+                return $stale;
+            }
+
+            throw $e;
+        }
 
         $venues = [];
         $venue_open = true;
@@ -80,25 +106,49 @@ class GoogleClient
 
                 continue; // Skip this row as it indicates closed venues
             }
-            // dump($site); // Debugging line to inspect each site data
             $venue = [];
             foreach ($headings as $index => $heading) {
                 $venue[$heading] = isset($site[$index]) ? $site[$index] : null;
             }
             $venue['data'] = []; // Initialize 'data' as an empty array
             $venue['data']['open'] = $venue_open; // Add 'open' status to each venue
-            $venue['data']['capacity_count'] = (int) filter_var($venue['Capacity'], FILTER_SANITIZE_NUMBER_INT); // Ensure capacity count is an integer
-            $venue['data']['public_transport_guess'] = filter_var($venue['Public Transport'], FILTER_VALIDATE_BOOL); // Convert to boolean
-            $venue['data']['disabled_bathrooms_guess'] = filter_var($venue['Disabled bathrooms?'], FILTER_VALIDATE_BOOL); // Convert to boolean
+            $venue['data']['capacity_count'] = (int) filter_var($venue['Capacity'] ?? '', FILTER_SANITIZE_NUMBER_INT); // Ensure capacity count is an integer
+            $venue['data']['public_transport_guess'] = filter_var($venue['Public Transport'] ?? '', FILTER_VALIDATE_BOOL); // Convert to boolean
+            $venue['data']['disabled_bathrooms_guess'] = filter_var($venue['Disabled bathrooms?'] ?? '', FILTER_VALIDATE_BOOL); // Convert to boolean
             $venue['data']['slug'] = Str::slug($venue['Venue Name']); // Slug used to link to the venue's own page
             $venues[] = $venue;
         }
         $venues = $this->sortVenuesByName($venues); // Sort venues by name
         $venues = $this->disambiguateSlugs($venues); // Ensure slugs are unique even if venue names collide
-        Redis::set($cacheKey, json_encode($venues));
-        Redis::expire($cacheKey, 3600); // Cache for 1 hour
+
+        $encoded = json_encode($venues);
+        Redis::setex($cacheKey, 3600, $encoded); // Cache for 1 hour
+        Redis::set($staleCacheKey, $encoded); // Kept without expiry as a last-known-good fallback
 
         return $venues;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>|null
+     */
+    protected function readVenueCache(string $cacheKey): ?array
+    {
+        $raw = Redis::get($cacheKey);
+        if ($raw === null || $raw === false) {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (! is_array($decoded)) {
+            Log::warning('Venue cache contained invalid JSON, ignoring.', [
+                'cache_key' => $cacheKey,
+                'json_error' => json_last_error_msg(),
+            ]);
+
+            return null;
+        }
+
+        return $decoded;
     }
 
     /**

@@ -1,0 +1,10 @@
+{
+  "glyph": "resources/branding/noun-sword-point-6919420-FFFFFF.svg",
+  "backgroundColor": "#FF6200",
+  "backgroundColors": {
+    "local": "#CC0000",
+    "development": "#CC0000",
+    "staging": "#0077CC",
+    "production": "#FF6200"
+  }
+}

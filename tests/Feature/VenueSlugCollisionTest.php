@@ -4,11 +4,19 @@ namespace Tests\Feature;
 
 use App\Service\Google\GoogleClient;
 use Google\Service\Sheets;
+use Illuminate\Support\Facades\Redis;
 use Mockery;
 use Tests\TestCase;
 
 class VenueSlugCollisionTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Redis::del('venue.index.v3', 'venue.index.v3.stale');
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();

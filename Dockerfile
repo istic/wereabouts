@@ -2,9 +2,12 @@ FROM node:26-alpine AS node-deps
 WORKDIR /var/www/html
 COPY package.json package-lock.json ./
 RUN npm ci
+COPY bin bin
 COPY resources resources
 COPY vite.config.js ./
 COPY public public
+ARG APP_ENV=production
+ENV APP_ENV=$APP_ENV
 RUN npm run build
 
 FROM php:8.5-fpm-alpine

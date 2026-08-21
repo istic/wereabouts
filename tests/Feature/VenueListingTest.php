@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Service\Google\GoogleClient;
+use App\Service\Google\Venue;
 use Google\Service\Sheets;
 use Illuminate\Support\Facades\Redis;
 use Mockery;
@@ -14,7 +15,7 @@ class VenueListingTest extends TestCase
     {
         parent::setUp();
 
-        Redis::del('venue.index', 'venue.index.stale');
+        Redis::del('venue.index.v2', 'venue.index.v2.stale');
     }
 
     protected function tearDown(): void
@@ -44,7 +45,7 @@ class VenueListingTest extends TestCase
         $venues = $client->listVenues();
 
         $this->assertCount(1, $venues);
-        $this->assertSame('Abney Scout and Guide Centre', $venues[0]['Venue Name']);
+        $this->assertSame('Abney Scout and Guide Centre', $venues[0]->name);
     }
 
     public function test_list_venues_marks_venues_after_the_closed_sentinel_as_closed(): void
@@ -57,8 +58,8 @@ class VenueListingTest extends TestCase
 
         $venues = collect($client->listVenues());
 
-        $this->assertTrue($venues->firstWhere('Venue Name', 'Open Venue')['data']['open']);
-        $this->assertFalse($venues->firstWhere('Venue Name', 'Closed Venue')['data']['open']);
+        $this->assertTrue($venues->firstWhere('name', 'Open Venue')->open);
+        $this->assertFalse($venues->firstWhere('name', 'Closed Venue')->open);
     }
 
     public function test_list_venues_handles_ragged_rows_with_missing_trailing_columns(): void
@@ -70,8 +71,8 @@ class VenueListingTest extends TestCase
         $venues = $client->listVenues();
 
         $this->assertCount(1, $venues);
-        $this->assertSame('Short Row Venue', $venues[0]['Venue Name']);
-        $this->assertNull($venues[0]['Aspects']);
+        $this->assertSame('Short Row Venue', $venues[0]->name);
+        $this->assertNull($venues[0]->aspects);
     }
 
     public function test_list_venues_sanitizes_free_text_capacity_into_an_integer(): void
@@ -82,7 +83,7 @@ class VenueListingTest extends TestCase
 
         $venues = $client->listVenues();
 
-        $this->assertSame(32, $venues[0]['data']['capacity_count']);
+        $this->assertSame(32, $venues[0]->capacityCount);
     }
 
     public function test_list_venues_caches_results_and_serves_them_on_subsequent_calls(): void
@@ -98,7 +99,7 @@ class VenueListingTest extends TestCase
         $client->rows = [];
         $second = $client->listVenues();
 
-        $this->assertSame($first, $second);
+        $this->assertEquals($first, $second);
     }
 
     public function test_sort_venues_by_name_orders_venues_alphabetically(): void
@@ -106,11 +107,11 @@ class VenueListingTest extends TestCase
         $client = new FakeGoogleClient([]);
 
         $sorted = $client->sortVenuesByName([
-            ['Venue Name' => 'Zebra Hall'],
-            ['Venue Name' => 'Abney Centre'],
+            Venue::fromSheetRow(['Venue Name'], ['Zebra Hall'], true),
+            Venue::fromSheetRow(['Venue Name'], ['Abney Centre'], true),
         ]);
 
-        $this->assertSame(['Abney Centre', 'Zebra Hall'], array_column($sorted, 'Venue Name'));
+        $this->assertSame(['Abney Centre', 'Zebra Hall'], array_map(fn (Venue $v) => $v->name, $sorted));
     }
 
     /**

@@ -22,7 +22,7 @@
         <div class="col-md-12 mb-4 col-lg-6 col-xl-6">
             <div class="card">
                 <div class="card-header">
-                    <a href="{{ route('venue.show', $venue['data']['slug']) }}">{{ $venue['Venue Name'] }}</a>
+                    <a href="{{ route('venue.show', $venue->slug) }}">{{ $venue->name }}</a>
                 </div>
 
                 <div class="card-body">

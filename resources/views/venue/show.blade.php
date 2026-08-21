@@ -11,7 +11,7 @@
     <div class="row justify-content-left">
         <div class="col-md-12 col-lg-8 col-xl-6">
             <div class="card">
-                <div class="card-header">{{ $venue['Venue Name'] }}</div>
+                <div class="card-header">{{ $venue->name }}</div>
 
                 <div class="card-body">
                     @include('venue._details', ['venue' => $venue])

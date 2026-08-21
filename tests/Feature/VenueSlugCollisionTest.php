@@ -21,7 +21,7 @@ class VenueSlugCollisionTest extends TestCase
 
         $venues = $client->listVenues();
 
-        $slugs = array_map(fn ($venue) => $venue['data']['slug'], $venues);
+        $slugs = array_map(fn ($venue) => $venue->slug, $venues);
 
         $this->assertSame(['abney-hall', 'abney-hall-2'], $slugs);
         $this->assertNotNull($client->findVenueBySlug('abney-hall'));

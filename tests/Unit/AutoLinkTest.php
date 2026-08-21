@@ -27,11 +27,19 @@ class AutoLinkTest extends TestCase
         );
     }
 
-    public function test_it_adds_target_blank_when_popup_is_true(): void
+    public function test_it_adds_target_blank_and_rel_noopener_when_popup_is_true(): void
     {
         $this->assertSame(
-            '<a href="http://example.com" target="_blank">http://example.com</a>',
+            '<a href="http://example.com" target="_blank" rel="noopener noreferrer">http://example.com</a>',
             auto_link('http://example.com', popup: true)
+        );
+    }
+
+    public function test_it_does_not_link_dangerous_url_schemes(): void
+    {
+        $this->assertSame(
+            'javascript://alert(1)',
+            auto_link('javascript://alert(1)')
         );
     }
 

@@ -4,13 +4,16 @@ function auto_link(?string $str, string $type = 'both', bool $popup = false): st
 {
     $str = $str ?? '';
 
-    // Find any URLs, matched against the raw (unescaped) string.
-    if ($type === 'email' || ! preg_match_all('#(\w*://|www\.)[^\s()<>;]+\w#i', $str, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+    // Find any URLs, matched against the raw (unescaped) string. Only http(s)
+    // and bare "www." links are linked - any other scheme (e.g. javascript:)
+    // is left as plain, escaped text.
+    if ($type === 'email' || ! preg_match_all('#(https?://|www\.)[^\s()<>;]+\w#i', $str, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
         return e($str);
     }
 
-    // Set our target HTML if using popup links.
-    $target = ($popup) ? ' target="_blank"' : '';
+    // Set our target HTML if using popup links. rel="noopener noreferrer"
+    // prevents the linked page from tabnabbing via window.opener.
+    $target = ($popup) ? ' target="_blank" rel="noopener noreferrer"' : '';
 
     $result = '';
     $cursor = 0;

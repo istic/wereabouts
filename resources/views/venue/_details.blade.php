@@ -1,7 +1,7 @@
 <div class="row">
     <label for="Venue_Location" class="col-sm-5 col-form-label">Location</label>
     <div class="col-sm-5">
-      <a id="Venue_Location" target="_blank" href="https://maps.google.com/?q={{ urlencode($venue->name . " " . $venue->location) }}">{{ $venue->location }}</a>
+      <a id="Venue_Location" target="_blank" rel="noopener noreferrer" href="https://maps.google.com/?q={{ urlencode($venue->name . " " . $venue->location) }}">{{ $venue->location }}</a>
     </div>
 </div>
 <div class="row">

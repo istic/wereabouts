@@ -79,7 +79,7 @@ class GoogleClient
             [$headings, $sites] = $this->getSheetData();
         } catch (RuntimeException $e) {
             Log::error('Failed to refresh venue list from Google Sheets, falling back to stale cache if available.', [
-                'exception' => $e->getMessage(),
+                'exception' => $e,
             ]);
 
             $stale = $this->readVenueCache($staleCacheKey);
@@ -108,6 +108,14 @@ class GoogleClient
         $venues = $this->disambiguateSlugs($venues); // Ensure slugs are unique even if venue names collide
 
         $encoded = json_encode(array_map(fn (Venue $venue) => $venue->toArray(), $venues));
+        if ($encoded === false) {
+            Log::warning('Failed to encode venue list for caching, serving it without updating the cache.', [
+                'json_error' => json_last_error_msg(),
+            ]);
+
+            return $venues;
+        }
+
         Redis::setex($cacheKey, 3600, $encoded); // Cache for 1 hour
         Redis::set($staleCacheKey, $encoded); // Kept without expiry as a last-known-good fallback
 
@@ -139,7 +147,7 @@ class GoogleClient
         } catch (\Throwable $e) {
             Log::warning('Venue cache did not match the expected Venue shape, ignoring.', [
                 'cache_key' => $cacheKey,
-                'exception' => $e->getMessage(),
+                'exception' => $e,
             ]);
 
             return null;

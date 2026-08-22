@@ -134,4 +134,40 @@ class GoogleGeocoderTest extends TestCase
 
         Http::assertSent(fn ($request) => ! str_contains($request->url(), 'components'));
     }
+
+    public function test_a_result_cached_under_one_country_restriction_is_not_reused_under_another(): void
+    {
+        config(['services.google_maps.key' => 'test-key']);
+
+        // Http::fake() checks the earliest-registered matching stub first,
+        // so both responses need registering up front as a sequence
+        // rather than via a second Http::fake() call later.
+        Http::fake([
+            'maps.googleapis.com/*' => Http::sequence()
+                ->push([
+                    'status' => 'OK',
+                    'results' => [
+                        ['geometry' => ['location' => ['lat' => 53.2843, 'lng' => -1.9531]]],
+                    ],
+                ])
+                ->push([
+                    'status' => 'OK',
+                    'results' => [
+                        ['geometry' => ['location' => ['lat' => 38.6799, 'lng' => -76.9878]]],
+                    ],
+                ]),
+        ]);
+
+        config(['app.geocode_country_code' => 'gb']);
+        (new GoogleGeocoder)->geocode('White Hall, Derbyshire');
+
+        // Switching the restriction (e.g. disabling it, or to another
+        // country) must not reuse the GB-restricted result.
+        config(['app.geocode_country_code' => '']);
+        $this->assertFalse((new GoogleGeocoder)->isCached('White Hall, Derbyshire'));
+
+        $unrestricted = (new GoogleGeocoder)->geocode('White Hall, Derbyshire');
+
+        $this->assertSame(['lat' => 38.6799, 'lng' => -76.9878], $unrestricted);
+    }
 }

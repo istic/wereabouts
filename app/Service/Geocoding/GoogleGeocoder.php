@@ -37,11 +37,16 @@ class GoogleGeocoder
      * The Redis key a query's coordinates are cached under, versioned so
      * bumping it after a shape change only requires touching one place.
      * Kept separate from NominatimGeocoder's cache key, since the two
-     * geocoders are different data sources that can disagree.
+     * geocoders are different data sources that can disagree. Includes the
+     * active country restriction, since a query cached under one
+     * restriction isn't a valid result under a different (or no)
+     * restriction.
      */
     public static function cacheKey(string $query): string
     {
-        return 'geocode.google.v1.'.sha1(strtolower(trim($query)));
+        $countryCode = config('app.geocode_country_code') ?: 'unrestricted';
+
+        return 'geocode.google.v1.'.$countryCode.'.'.sha1(strtolower(trim($query)));
     }
 
     public function isConfigured(): bool

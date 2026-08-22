@@ -31,15 +31,24 @@ class NominatimGeocoder
 
     protected const NOT_FOUND_TTL = 60 * 60 * 24; // 1 day, in case it was transient
 
-    protected bool $hasMadeLiveRequest = false;
+    /**
+     * The Redis key the last live Nominatim request (by any process) was
+     * made at, used to throttle across all of them - see throttle().
+     */
+    protected const THROTTLE_KEY = 'nominatim.throttle.last_request_at';
 
     /**
      * The Redis key a query's coordinates are cached under, versioned so
      * bumping it after a shape change only requires touching one place.
+     * Includes the active country restriction, since a query cached under
+     * one restriction isn't a valid result under a different (or no)
+     * restriction.
      */
     public static function cacheKey(string $query): string
     {
-        return 'geocode.v1.'.sha1(strtolower(trim($query)));
+        $countryCode = config('app.geocode_country_code') ?: 'unrestricted';
+
+        return 'geocode.v1.'.$countryCode.'.'.sha1(strtolower(trim($query)));
     }
 
     /**
@@ -118,8 +127,6 @@ class NominatimGeocoder
             return false;
         }
 
-        $this->hasMadeLiveRequest = true;
-
         if (! $response->successful()) {
             Log::warning('Nominatim returned an error response while geocoding a venue location.', [
                 'query' => $query,
@@ -139,13 +146,32 @@ class NominatimGeocoder
 
     /**
      * Nominatim's usage policy caps anonymous use at one request per
-     * second; sleep before every live request after the first one this
-     * instance has made.
+     * second, enforced here across every process/worker (not just
+     * repeated calls within this instance) via a shared last-request
+     * timestamp in Redis. This is best-effort, not a hard guarantee: two
+     * processes can both pass the check within the same poll window, but
+     * it closes the much larger gap of concurrent workers not
+     * coordinating at all.
      */
     protected function throttle(): void
     {
-        if ($this->hasMadeLiveRequest && ! app()->environment('testing')) {
-            sleep(1);
+        if (app()->environment('testing')) {
+            return;
         }
+
+        while (true) {
+            $lastRequestAt = Redis::get(self::THROTTLE_KEY);
+            $elapsed = $lastRequestAt === null || $lastRequestAt === false
+                ? null
+                : microtime(true) - (float) $lastRequestAt;
+
+            if ($elapsed === null || $elapsed >= 1.0) {
+                break;
+            }
+
+            usleep(100_000);
+        }
+
+        Redis::set(self::THROTTLE_KEY, microtime(true));
     }
 }

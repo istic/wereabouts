@@ -97,4 +97,28 @@ class NominatimGeocoderTest extends TestCase
 
         Http::assertSent(fn ($request) => ! str_contains($request->url(), 'countrycodes'));
     }
+
+    public function test_a_result_cached_under_one_country_restriction_is_not_reused_under_another(): void
+    {
+        // Http::fake() checks the earliest-registered matching stub first,
+        // so both responses need registering up front as a sequence
+        // rather than via a second Http::fake() call later.
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::sequence()
+                ->push([['lat' => '53.2843', 'lon' => '-1.9531']])
+                ->push([['lat' => '38.6799', 'lon' => '-76.9878']]),
+        ]);
+
+        config(['app.geocode_country_code' => 'gb']);
+        (new NominatimGeocoder)->geocode('White Hall, Derbyshire');
+
+        // Switching the restriction (e.g. disabling it, or to another
+        // country) must not reuse the GB-restricted result.
+        config(['app.geocode_country_code' => '']);
+        $this->assertFalse((new NominatimGeocoder)->isCached('White Hall, Derbyshire'));
+
+        $unrestricted = (new NominatimGeocoder)->geocode('White Hall, Derbyshire');
+
+        $this->assertSame(['lat' => 38.6799, 'lng' => -76.9878], $unrestricted);
+    }
 }

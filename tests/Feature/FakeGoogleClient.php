@@ -10,8 +10,12 @@ class FakeGoogleClient extends GoogleClient
 {
     /**
      * @param  array<int, array<int, string>>  $rows
+     * @param  array<int, ?string>  $nameHyperlinks  Keyed to match $rows, simulating
+     *                                               the Venue Name cell being linked
+     *                                               to a website rather than showing
+     *                                               the URL as text.
      */
-    public function __construct(public array $rows = [])
+    public function __construct(public array $rows = [], public array $nameHyperlinks = [])
     {
         $this->sheetID = 'fake_sheet_id';
     }
@@ -39,6 +43,6 @@ class FakeGoogleClient extends GoogleClient
             'Price data (cost + data of recorded cost)',
         ];
 
-        return [$headings, $this->rows];
+        return [$headings, $this->rows, $this->nameHyperlinks];
     }
 }

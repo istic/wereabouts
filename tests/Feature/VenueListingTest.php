@@ -14,7 +14,7 @@ class VenueListingTest extends TestCase
     {
         parent::setUp();
 
-        Redis::del('venue.index.v4', 'venue.index.v4.stale');
+        Redis::del('venue.index.v5', 'venue.index.v5.stale');
     }
 
     protected function tearDown(): void
@@ -159,7 +159,7 @@ class VenueListingTest extends TestCase
     {
         // Simulates a cache entry written by a previous deploy that cached
         // venues as raw sheet-keyed arrays instead of Venue::toArray().
-        Redis::set('venue.index.v4', json_encode([
+        Redis::set('venue.index.v5', json_encode([
             ['Venue Name' => 'Stale Shape Venue', 'data' => ['open' => true]],
         ]));
 
@@ -185,6 +185,25 @@ class VenueListingTest extends TestCase
 
         $this->assertSame('https://example.com/venue', $venues->firstWhere('name', 'https://example.com/venue')->website);
         $this->assertSame('http://www.example.org', $venues->firstWhere('name', 'www.example.org')->website);
+        $this->assertNull($venues->firstWhere('name', 'Ordinary Venue Name')->website);
+    }
+
+    public function test_list_venues_exposes_a_hyperlinked_venue_name_as_its_website(): void
+    {
+        // The common real-world case: the sheet shows the venue's actual name,
+        // but the cell text is linked to the venue's website, rather than the
+        // cell literally containing the URL as text.
+        $client = new FakeGoogleClient([
+            $this->rawVenueRow('Moor House Adventure Centre'),
+            $this->rawVenueRow('Ordinary Venue Name'),
+        ], nameHyperlinks: [
+            'https://moor-house.org.uk/',
+            null,
+        ]);
+
+        $venues = collect($client->listVenues());
+
+        $this->assertSame('https://moor-house.org.uk/', $venues->firstWhere('name', 'Moor House Adventure Centre')->website);
         $this->assertNull($venues->firstWhere('name', 'Ordinary Venue Name')->website);
     }
 

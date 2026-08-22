@@ -31,8 +31,11 @@ readonly class Venue
      *
      * @param  array<int, string>  $headings
      * @param  array<int, string>  $row
+     * @param  ?string  $nameHyperlink  The Venue Name cell's hyperlink, if the
+     *                                  sheet has the venue's name linked to its
+     *                                  website rather than showing the URL as text.
      */
-    public static function fromSheetRow(array $headings, array $row, bool $open): self
+    public static function fromSheetRow(array $headings, array $row, bool $open, ?string $nameHyperlink = null): self
     {
         $values = [];
         foreach ($headings as $index => $heading) {
@@ -41,7 +44,7 @@ readonly class Venue
 
         return new self(
             name: $values['Venue Name'],
-            website: self::extractWebsite($values['Venue Name']),
+            website: $nameHyperlink ?? self::extractWebsite($values['Venue Name']),
             location: $values['Location'] ?? null,
             capacity: $values['Capacity'] ?? null,
             capacityCount: (int) filter_var($values['Capacity'] ?? '', FILTER_SANITIZE_NUMBER_INT),

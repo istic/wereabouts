@@ -111,7 +111,7 @@ class FakeShortRowGoogleClient extends GoogleClient
             ['Bare Bones Venue', 'Nowhere'],
         ];
 
-        return [$headings, $sites];
+        return [$headings, $sites, [null]];
     }
 }
 
@@ -147,6 +147,6 @@ class FakeVenueGoogleClient extends GoogleClient
             ],
         ];
 
-        return [array_keys($data[0]), [array_values($data[0])]];
+        return [array_keys($data[0]), [array_values($data[0])], [null]];
     }
 }

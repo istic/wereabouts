@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\BuildsVenueMapPoints;
-use App\Service\Geocoding\NominatimGeocoder;
+use App\Service\Geocoding\FallbackGeocoder;
 use App\Service\Google\GoogleClient;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 
 class MapController extends Controller
 {
@@ -13,13 +14,26 @@ class MapController extends Controller
 
     public function __construct(
         protected GoogleClient $googleSheet,
-        protected NominatimGeocoder $geocoder,
+        protected FallbackGeocoder $geocoder,
     ) {}
 
     /**
-     * Display all venues plotted on a single map.
+     * Display the all-venues map page. The venue points themselves are
+     * fetched client-side from points(), so this renders immediately
+     * regardless of how cold the geocoding cache is.
      */
     public function index(): View
+    {
+        return view('map.index');
+    }
+
+    /**
+     * Geocode as many not-yet-cached venues as the configured cap allows
+     * and return every venue's point as JSON. The page re-polls this
+     * while any venues are still pending, so the map fills in as venues
+     * are geocoded rather than needing a reload.
+     */
+    public function points(): JsonResponse
     {
         $venues = $this->googleSheet->listVenues();
 
@@ -62,6 +76,6 @@ class MapController extends Controller
             $points[] = $this->venueMapPoint($venue, $coordinates);
         }
 
-        return view('map.index', compact('points', 'unmapped', 'pending'));
+        return response()->json(compact('points', 'unmapped', 'pending'));
     }
 }

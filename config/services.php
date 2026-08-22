@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    // A Google Maps Platform API key, used only as a paid fallback for
+    // venue locations Nominatim (the free default geocoder) can't resolve.
+    // This is a Maps Platform API key, not the Sheets service account
+    // credential in APP_GOOGLE_CREDENTIALS_FILENAME - the Geocoding API
+    // doesn't accept that credential type. Left unset, the fallback is
+    // simply never used.
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
 ];

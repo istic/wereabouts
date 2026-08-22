@@ -136,4 +136,10 @@ return [
     // "live" against Nominatim in a single request; see MapController.
     'map_max_live_geocodes_per_request' => env('APP_MAP_MAX_LIVE_GEOCODES_PER_REQUEST', 10),
 
+    // The Leaflet tile layer used by the venue maps, as a {s}/{z}/{x}/{y}
+    // URL template. Swap these to point at a different tile provider -
+    // just make sure the attribution matches what that provider requires.
+    'map_tile_url_template' => env('APP_MAP_TILE_URL_TEMPLATE', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+    'map_tile_attribution' => env('APP_MAP_TILE_ATTRIBUTION', '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'),
+
 ];

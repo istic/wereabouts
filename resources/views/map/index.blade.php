@@ -15,30 +15,19 @@
     <div class="row">
         <div class="col-md-12 mb-3">
             <h1 class="h4">Venue map</h1>
-            @if($pending > 0)
-                <p class="text-muted small mb-1">
-                    @if($pending === 1)
-                        1 venue is still being located &mdash; reload the page in a moment to see it.
-                    @else
-                        {{ $pending }} venues are still being located &mdash; reload the page in a moment to see them.
-                    @endif
-                </p>
-            @endif
-            @if($unmapped > 0)
-                <p class="text-muted small mb-0">
-                    @if($unmapped === 1)
-                        1 venue could not be placed on the map automatically.
-                    @else
-                        {{ $unmapped }} venues could not be placed on the map automatically.
-                    @endif
-                </p>
-            @endif
+            <p id="map-status" class="text-muted small mb-0" role="status" aria-live="polite"></p>
         </div>
     </div>
 
     <div class="row">
         <div class="col-md-12">
-            <div id="venues-map" data-points='@json($points)' style="height: 70vh;"></div>
+            <div
+                id="venues-map"
+                data-points-url="{{ route('map.points') }}"
+                data-tile-url="{{ config('app.map_tile_url_template') }}"
+                data-tile-attribution="{{ config('app.map_tile_attribution') }}"
+                style="height: 70vh;"
+            ></div>
         </div>
     </div>
 </div>

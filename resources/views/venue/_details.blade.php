@@ -14,8 +14,12 @@
 @endif
 <div class="row">
     <label for="Venue_Location_{{ $venue->slug }}" class="col-sm-5 col-form-label">Location</label>
-    <div class="col-sm-5">
+    <div class="col-sm-5 d-flex align-items-center gap-2">
       <a id="Venue_Location_{{ $venue->slug }}" target="_blank" rel="noopener noreferrer" href="https://www.openstreetmap.org/search?query={{ urlencode($venue->name . " " . $venue->location) }}">{{ $venue->location }}</a>
+      <a id="Venue_Location_GoogleMaps_{{ $venue->slug }}" target="_blank" rel="noopener noreferrer" class="text-muted flex-shrink-0" title="Open in Google Maps" href="https://maps.google.com/?q={{ urlencode($venue->name . " " . $venue->location) }}">
+        <span class="visually-hidden">Open in Google Maps</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10Zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/></svg>
+      </a>
     </div>
 </div>
 <div class="row">

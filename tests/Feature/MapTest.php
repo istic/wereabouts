@@ -7,24 +7,38 @@ use App\Service\Google\GoogleClient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use Mockery;
-use Tests\Concerns\InteractsWithMapPoints;
 use Tests\TestCase;
 
 class MapTest extends TestCase
 {
-    use InteractsWithMapPoints;
-
     protected function setUp(): void
     {
         parent::setUp();
 
         Redis::flushdb();
+        config(['services.google_maps.key' => null]);
     }
 
     protected function tearDown(): void
     {
         Mockery::close();
         parent::tearDown();
+    }
+
+    public function test_the_map_page_renders_without_geocoding_anything(): void
+    {
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
+            $this->rawVenueRow('Abney Scout and Guide Centre', 'Cheadle, nr Stockport'),
+        ]));
+
+        Http::fake();
+
+        $response = $this->get(route('map.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('id="venues-map"', false);
+        $response->assertSee('data-points-url="'.route('map.points').'"', false);
+        Http::assertNothingSent();
     }
 
     public function test_it_plots_geocodable_venues_on_the_map(): void
@@ -39,18 +53,17 @@ class MapTest extends TestCase
             ]),
         ]);
 
-        $response = $this->get(route('map.index'));
+        $response = $this->get(route('map.points'));
 
         $response->assertStatus(200);
-        $response->assertSee('id="venues-map"', false);
-
-        $points = $this->pointsFromResponse($response);
+        $points = $response->json('points');
         $this->assertCount(1, $points);
         $this->assertSame('Abney Scout and Guide Centre', $points[0]['name']);
         $this->assertSame(53.4084, $points[0]['lat']);
         $this->assertSame(-2.9916, $points[0]['lng']);
         $this->assertTrue($points[0]['open']);
         $this->assertSame(route('venue.show', 'abney-scout-and-guide-centre'), $points[0]['url']);
+        $response->assertJson(['unmapped' => 0, 'pending' => 0]);
     }
 
     public function test_it_counts_venues_with_no_location_as_unmapped_without_geocoding_them(): void
@@ -61,14 +74,14 @@ class MapTest extends TestCase
 
         Http::fake();
 
-        $response = $this->get(route('map.index'));
+        $response = $this->get(route('map.points'));
 
         $response->assertStatus(200);
-        $response->assertSee('1 venue could not be placed on the map automatically.');
+        $response->assertExactJson(['points' => [], 'unmapped' => 1, 'pending' => 0]);
         Http::assertNothingSent();
     }
 
-    public function test_it_counts_a_venue_nominatim_could_not_resolve_as_unmapped(): void
+    public function test_it_counts_a_venue_neither_geocoder_could_resolve_as_unmapped(): void
     {
         app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
             $this->rawVenueRow('Unresolvable Venue', 'Nowhere in particular'),
@@ -78,10 +91,39 @@ class MapTest extends TestCase
             'nominatim.openstreetmap.org/*' => Http::response([]),
         ]);
 
-        $response = $this->get(route('map.index'));
+        $response = $this->get(route('map.points'));
 
         $response->assertStatus(200);
-        $response->assertSee('1 venue could not be placed on the map automatically.');
+        $response->assertExactJson(['points' => [], 'unmapped' => 1, 'pending' => 0]);
+    }
+
+    public function test_it_falls_back_to_google_when_nominatim_cannot_resolve_a_venue(): void
+    {
+        config(['services.google_maps.key' => 'test-key']);
+
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
+            $this->rawVenueRow('Google Only Venue', 'Somewhere Nominatim Misses'),
+        ]));
+
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([]),
+            'maps.googleapis.com/*' => Http::response([
+                'status' => 'OK',
+                'results' => [
+                    ['geometry' => ['location' => ['lat' => 51.5074, 'lng' => -0.1278]]],
+                ],
+            ]),
+        ]);
+
+        $response = $this->get(route('map.points'));
+
+        $response->assertStatus(200);
+        $points = $response->json('points');
+        $this->assertCount(1, $points);
+        $this->assertSame('Google Only Venue', $points[0]['name']);
+        $this->assertSame(51.5074, $points[0]['lat']);
+        $this->assertSame(-0.1278, $points[0]['lng']);
+        $response->assertJson(['unmapped' => 0]);
     }
 
     public function test_it_caps_live_lookups_per_request_and_reports_the_rest_as_pending(): void
@@ -99,11 +141,11 @@ class MapTest extends TestCase
             ]),
         ]);
 
-        $response = $this->get(route('map.index'));
+        $response = $this->get(route('map.points'));
 
         $response->assertStatus(200);
         Http::assertSentCount(1);
-        $response->assertSee('1 venue is still being located');
+        $response->assertJson(['pending' => 1]);
     }
 
     public function test_an_already_cached_venue_does_not_count_against_the_live_lookup_cap(): void
@@ -121,14 +163,14 @@ class MapTest extends TestCase
         ]);
 
         (new NominatimGeocoder)->geocode('Cached Venue, Somewhere');
-        Http::fake(); // Reset the request log so only the /map request's own calls count below.
+        Http::fake(); // Reset the request log so only the request below counts.
 
-        $response = $this->get(route('map.index'));
+        $response = $this->get(route('map.points'));
 
         $response->assertStatus(200);
         Http::assertNothingSent();
-        $response->assertSee('Cached Venue');
-        $response->assertDontSee('still being located');
+        $response->assertJson(['pending' => 0]);
+        $this->assertCount(1, $response->json('points'));
     }
 
     protected function rawVenueRow(string $name, string $location): array

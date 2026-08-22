@@ -30,5 +30,11 @@
             ></div>
         </div>
     </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <ul id="map-unmapped" class="text-muted small mt-3"></ul>
+        </div>
+    </div>
 </div>
 @endsection

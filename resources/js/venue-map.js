@@ -38,22 +38,42 @@ function buildPopupContent(point) {
     return wrapper;
 }
 
-function statusText(unmapped, pending) {
-    const parts = [];
-
-    if (pending > 0) {
-        parts.push(pending === 1 ? '1 venue is still being located…' : `${pending} venues are still being located…`);
+function pendingText(pending) {
+    if (pending === 0) {
+        return '';
     }
 
-    if (unmapped > 0) {
-        parts.push(
-            unmapped === 1
-                ? '1 venue could not be placed on the map automatically.'
-                : `${unmapped} venues could not be placed on the map automatically.`,
-        );
+    return pending === 1 ? '1 venue is still being located…' : `${pending} venues are still being located…`;
+}
+
+function buildUnmappedListItem(venue) {
+    const li = document.createElement('li');
+
+    const link = document.createElement('a');
+    link.href = venue.url;
+    link.textContent = venue.name;
+    li.appendChild(link);
+
+    if (venue.reason) {
+        const reason = document.createElement('span');
+        reason.textContent = ` — ${venue.reason}`;
+        li.appendChild(reason);
     }
 
-    return parts.join(' ');
+    return li;
+}
+
+// Lists each unmapped venue (with a link back to it, and why it's
+// unmapped) when the page provides a list element for it - the
+// all-venues map. A page without one (a venue's own map, where the
+// unmapped venue is obviously the page you're already on) instead gets
+// a short summary folded into statusEl by the caller.
+function renderUnmappedList(listEl, unmapped) {
+    if (!listEl) {
+        return;
+    }
+
+    listEl.replaceChildren(...unmapped.map(buildUnmappedListItem));
 }
 
 function renderMarkers(map, markerLayer, points) {
@@ -90,7 +110,7 @@ async function fetchPoints(url) {
     return response.json();
 }
 
-async function loadAndScheduleNext(map, markerLayer, statusEl, url) {
+async function loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, url) {
     let data;
 
     try {
@@ -103,14 +123,30 @@ async function loadAndScheduleNext(map, markerLayer, statusEl, url) {
         return;
     }
 
+    const unmapped = data.unmapped || [];
+
     renderMarkers(map, markerLayer, data.points || []);
+    renderUnmappedList(unmappedListEl, unmapped);
 
     if (statusEl) {
-        statusEl.textContent = statusText(data.unmapped || 0, data.pending || 0);
+        const parts = [pendingText(data.pending || 0)];
+
+        // No list element on this page (a venue's own map) to hold the
+        // unmapped detail, so fold a plain-text summary into the status
+        // line instead.
+        if (!unmappedListEl && unmapped.length > 0) {
+            parts.push(
+                unmapped.length === 1
+                    ? '1 venue could not be placed on the map automatically.'
+                    : `${unmapped.length} venues could not be placed on the map automatically.`,
+            );
+        }
+
+        statusEl.textContent = parts.filter(Boolean).join(' ');
     }
 
     if ((data.pending || 0) > 0) {
-        setTimeout(() => loadAndScheduleNext(map, markerLayer, statusEl, url), POLL_INTERVAL_MS);
+        setTimeout(() => loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, url), POLL_INTERVAL_MS);
     }
 }
 
@@ -126,6 +162,7 @@ function initVenuesMap() {
     }
 
     const statusEl = document.getElementById('map-status');
+    const unmappedListEl = document.getElementById('map-unmapped');
 
     const map = L.map(container).setView(UK_CENTRE, 5);
     const markerLayer = L.layerGroup().addTo(map);
@@ -135,7 +172,7 @@ function initVenuesMap() {
         attribution: container.dataset.tileAttribution || DEFAULT_TILE_ATTRIBUTION,
     }).addTo(map);
 
-    loadAndScheduleNext(map, markerLayer, statusEl, pointsUrl);
+    loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, pointsUrl);
 }
 
 document.addEventListener('DOMContentLoaded', initVenuesMap);

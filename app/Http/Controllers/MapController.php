@@ -38,14 +38,14 @@ class MapController extends Controller
         $venues = $this->googleSheet->listVenues();
 
         $points = [];
-        $unmapped = 0;
+        $unmapped = [];
         $pending = 0;
         $liveLookups = 0;
         $maxLiveLookups = config('app.map_max_live_geocodes_per_request');
 
         foreach ($venues as $venue) {
             if (! $venue->location) {
-                $unmapped++;
+                $unmapped[] = $this->unmappedVenue($venue, 'no location listed');
 
                 continue;
             }
@@ -68,7 +68,7 @@ class MapController extends Controller
 
             $coordinates = $this->geocoder->geocode($query);
             if (! $coordinates) {
-                $unmapped++;
+                $unmapped[] = $this->unmappedVenue($venue, 'could not be located');
 
                 continue;
             }

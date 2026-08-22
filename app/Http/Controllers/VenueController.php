@@ -51,7 +51,7 @@ class VenueController extends Controller
         abort_if(! $venue, 404);
 
         $points = [];
-        $unmapped = 0;
+        $unmapped = [];
 
         if ($venue->location) {
             $coordinates = $this->geocoder->geocode($this->geocodeQueryFor($venue));
@@ -59,7 +59,7 @@ class VenueController extends Controller
             if ($coordinates) {
                 $points[] = $this->venueMapPoint($venue, $coordinates);
             } else {
-                $unmapped = 1;
+                $unmapped[] = $this->unmappedVenue($venue, 'could not be located');
             }
         }
 

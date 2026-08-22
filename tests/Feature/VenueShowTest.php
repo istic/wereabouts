@@ -84,7 +84,7 @@ class VenueShowTest extends TestCase
         $this->assertSame('Abney Scout and Guide Centre', $points[0]['name']);
         $this->assertSame(53.4084, $points[0]['lat']);
         $this->assertSame(-2.9916, $points[0]['lng']);
-        $response->assertJson(['unmapped' => 0, 'pending' => 0]);
+        $response->assertJson(['unmapped' => [], 'pending' => 0]);
     }
 
     public function test_venue_points_endpoint_reports_when_it_could_not_be_placed_on_the_map(): void
@@ -96,7 +96,11 @@ class VenueShowTest extends TestCase
         $response = $this->get(route('venue.points', 'abney-scout-and-guide-centre'));
 
         $response->assertStatus(200);
-        $response->assertExactJson(['points' => [], 'unmapped' => 1, 'pending' => 0]);
+        $response->assertExactJson(['points' => [], 'unmapped' => [[
+            'name' => 'Abney Scout and Guide Centre',
+            'url' => route('venue.show', 'abney-scout-and-guide-centre'),
+            'reason' => 'could not be located',
+        ]], 'pending' => 0]);
     }
 
     public function test_venue_points_endpoint_falls_back_to_google_when_nominatim_cannot_resolve_it(): void

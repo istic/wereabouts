@@ -30,4 +30,16 @@ trait BuildsVenueMapPoints
             'lng' => $coordinates['lng'],
         ];
     }
+
+    /**
+     * @return array{name: string, url: string, reason: string}
+     */
+    protected function unmappedVenue(Venue $venue, string $reason): array
+    {
+        return [
+            'name' => $venue->name,
+            'url' => route('venue.show', $venue->slug),
+            'reason' => $reason,
+        ];
+    }
 }

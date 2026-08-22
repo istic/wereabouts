@@ -11,6 +11,7 @@ export default defineConfig({
             input: [
                 'resources/sass/app.scss',
                 'resources/js/app.js',
+                'resources/js/venue-map.js',
                 'resources/icons/apple-touch-icon.png',
                 'resources/icons/favicon-96x96.png',
                 'resources/icons/favicon.ico',

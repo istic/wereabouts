@@ -132,4 +132,8 @@ return [
     // silently missing new fields.
     'venue_cache_version' => 5,
 
+    // Caps how many not-yet-geocoded venues the /map page will look up
+    // "live" against Nominatim in a single request; see MapController.
+    'map_max_live_geocodes_per_request' => env('APP_MAP_MAX_LIVE_GEOCODES_PER_REQUEST', 10),
+
 ];

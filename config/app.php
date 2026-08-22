@@ -127,4 +127,9 @@ return [
 
     'google_credentials_filename' => env('APP_GOOGLE_CREDENTIALS_FILENAME', 'credentials.json'),
 
+    // Bump this whenever the shape of the cached Venue objects changes, so
+    // stale caches from the old shape are ignored instead of crashing or
+    // silently missing new fields.
+    'venue_cache_version' => 5,
+
 ];

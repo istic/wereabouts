@@ -14,7 +14,7 @@ class VenueListingTest extends TestCase
     {
         parent::setUp();
 
-        Redis::del('venue.index.v5', 'venue.index.v5.stale');
+        Redis::del(GoogleClient::venueCacheKey(), GoogleClient::venueCacheKey().'.stale');
     }
 
     protected function tearDown(): void
@@ -159,7 +159,7 @@ class VenueListingTest extends TestCase
     {
         // Simulates a cache entry written by a previous deploy that cached
         // venues as raw sheet-keyed arrays instead of Venue::toArray().
-        Redis::set('venue.index.v5', json_encode([
+        Redis::set(GoogleClient::venueCacheKey(), json_encode([
             ['Venue Name' => 'Stale Shape Venue', 'data' => ['open' => true]],
         ]));
 
@@ -223,6 +223,13 @@ class VenueListingTest extends TestCase
 
         $this->assertNull($venues->firstWhere('name', 'Venue With A Mailto Link')->website);
         $this->assertNull($venues->firstWhere('name', 'Venue With An Empty Hyperlink')->website);
+    }
+
+    public function test_venue_cache_key_is_derived_from_the_configured_version(): void
+    {
+        config(['app.venue_cache_version' => 'test-marker']);
+
+        $this->assertSame('venue.index.vtest-marker', GoogleClient::venueCacheKey());
     }
 
     public function test_the_venue_details_render_a_website_link_when_the_name_is_a_url(): void

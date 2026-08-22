@@ -15,6 +15,7 @@
 
                 <div class="card-body">
                     @include('venue._details', ['venue' => $venue])
+                    @include('venue._map', ['venue' => $venue])
                 </div>
             </div>
         </div>

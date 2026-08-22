@@ -47,6 +47,14 @@ class VenueShowTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    public function test_venue_page_shows_an_embedded_map(): void
+    {
+        $response = $this->get(route('venue.show', 'abney-scout-and-guide-centre'));
+
+        $response->assertStatus(200);
+        $response->assertSee('https://www.google.com/maps?q=Abney+Scout+and+Guide+Centre+Cheadle%2C+nr+Stockport&output=embed', false);
+    }
 }
 
 class VenueShowMissingColumnsTest extends TestCase

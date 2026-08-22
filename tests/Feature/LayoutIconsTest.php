@@ -13,7 +13,8 @@ class LayoutIconsTest extends TestCase
     {
         parent::setUp();
 
-        Redis::del(GoogleClient::venueCacheKey(), GoogleClient::venueCacheKey().'.stale');
+        $cacheKey = GoogleClient::venueCacheKey();
+        Redis::del($cacheKey, "{$cacheKey}.stale");
     }
 
     protected function tearDown(): void

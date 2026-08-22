@@ -14,6 +14,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const UK_CENTRE = [54.5, -3];
+const SINGLE_VENUE_ZOOM = 15;
 
 function buildPopupContent(point) {
     const wrapper = document.createElement('div');
@@ -64,7 +65,13 @@ function initVenuesMap() {
         return marker;
     });
 
-    map.fitBounds(L.featureGroup(markers).getBounds().pad(0.15));
+    // fitBounds on a single point has an ill-defined "zoom to fit a
+    // zero-size box" edge case; a fixed zoom is more predictable there.
+    if (points.length === 1) {
+        map.setView([points[0].lat, points[0].lng], SINGLE_VENUE_ZOOM);
+    } else {
+        map.fitBounds(L.featureGroup(markers).getBounds().pad(0.15));
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initVenuesMap);

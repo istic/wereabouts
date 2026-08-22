@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\BuildsVenueMapPoints;
+use App\Service\Geocoding\NominatimGeocoder;
 use App\Service\Google\GoogleClient;
 use Illuminate\Contracts\View\View;
 
 class VenueController extends Controller
 {
+    use BuildsVenueMapPoints;
+
     public function __construct(
-
         protected GoogleClient $googleSheet,
-
+        protected NominatimGeocoder $geocoder,
     ) {}
 
     /**
@@ -32,6 +35,14 @@ class VenueController extends Controller
 
         abort_if(! $venue, 404);
 
-        return view('venue.show', compact('venue'));
+        $points = [];
+        if ($venue->location) {
+            $coordinates = $this->geocoder->geocode($this->geocodeQueryFor($venue));
+            if ($coordinates) {
+                $points[] = $this->venueMapPoint($venue, $coordinates);
+            }
+        }
+
+        return view('venue.show', compact('venue', 'points'));
     }
 }

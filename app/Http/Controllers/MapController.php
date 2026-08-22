@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\BuildsVenueMapPoints;
 use App\Service\Geocoding\NominatimGeocoder;
 use App\Service\Google\GoogleClient;
 use Illuminate\Contracts\View\View;
 
 class MapController extends Controller
 {
+    use BuildsVenueMapPoints;
+
     public function __construct(
         protected GoogleClient $googleSheet,
         protected NominatimGeocoder $geocoder,
@@ -33,7 +36,7 @@ class MapController extends Controller
                 continue;
             }
 
-            $query = "{$venue->name}, {$venue->location}";
+            $query = $this->geocodeQueryFor($venue);
             $cached = $this->geocoder->isCached($query);
 
             // A cold cache would otherwise turn one page load into a many-
@@ -56,13 +59,7 @@ class MapController extends Controller
                 continue;
             }
 
-            $points[] = [
-                'name' => $venue->name,
-                'url' => route('venue.show', $venue->slug),
-                'open' => $venue->open,
-                'lat' => $coordinates['lat'],
-                'lng' => $coordinates['lng'],
-            ];
+            $points[] = $this->venueMapPoint($venue, $coordinates);
         }
 
         return view('map.index', compact('points', 'unmapped', 'pending'));

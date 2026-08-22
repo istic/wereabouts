@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('head')
+    @vite('resources/js/venue-map.js')
+@endpush
+
 @section('content')
 <div class="container">
     <div class="row">
@@ -15,7 +19,7 @@
 
                 <div class="card-body">
                     @include('venue._details', ['venue' => $venue])
-                    @include('venue._map', ['venue' => $venue])
+                    @include('venue._map', ['venue' => $venue, 'points' => $points])
                 </div>
             </div>
         </div>

@@ -6,12 +6,14 @@ use App\Service\Geocoding\NominatimGeocoder;
 use App\Service\Google\GoogleClient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Testing\TestResponse;
 use Mockery;
+use Tests\Concerns\InteractsWithMapPoints;
 use Tests\TestCase;
 
 class MapTest extends TestCase
 {
+    use InteractsWithMapPoints;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -49,21 +51,6 @@ class MapTest extends TestCase
         $this->assertSame(-2.9916, $points[0]['lng']);
         $this->assertTrue($points[0]['open']);
         $this->assertSame(route('venue.show', 'abney-scout-and-guide-centre'), $points[0]['url']);
-    }
-
-    /**
-     * Decodes the map's data-points attribute back into an array, since the
-     * json Blade directive escapes it (slashes, quotes, etc.) for safe
-     * HTML-attribute embedding, which makes it unsuitable for a raw
-     * substring assertSee().
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    protected function pointsFromResponse(TestResponse $response): array
-    {
-        preg_match("/id=\"venues-map\" data-points='(.*?)' style=/s", $response->getContent(), $matches);
-
-        return json_decode($matches[1], true);
     }
 
     public function test_it_counts_venues_with_no_location_as_unmapped_without_geocoding_them(): void

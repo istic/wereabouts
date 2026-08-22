@@ -83,12 +83,21 @@ class GoogleClient
     }
 
     /**
+     * The Redis key venues are cached under, versioned by config so bumping
+     * it after a Venue shape change only requires touching one place.
+     */
+    public static function venueCacheKey(): string
+    {
+        return 'venue.index.v'.config('app.venue_cache_version');
+    }
+
+    /**
      * @return array<int, Venue>
      */
     public function listVenues(): array
     {
-        $cacheKey = 'venue.index.v5'; // Bump this suffix whenever the cached venue shape changes
-        $staleCacheKey = 'venue.index.v5.stale';
+        $cacheKey = static::venueCacheKey();
+        $staleCacheKey = "{$cacheKey}.stale";
 
         $cached = $this->readVenueCache($cacheKey);
         if ($cached !== null) {

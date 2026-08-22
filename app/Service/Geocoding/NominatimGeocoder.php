@@ -125,7 +125,7 @@ class NominatimGeocoder
             return false;
         }
 
-        $result = $response->json(0);
+        $result = $response->json()[0] ?? null;
         if (! isset($result['lat'], $result['lon'])) {
             return null;
         }

@@ -101,11 +101,17 @@ class GoogleGeocoder
      */
     protected function fetch(string $query): array|null|false
     {
+        $countryCode = config('app.geocode_country_code');
+
         try {
-            $response = Http::get(self::ENDPOINT, [
+            $response = Http::get(self::ENDPOINT, array_filter([
                 'address' => $query,
                 'key' => config('services.google_maps.key'),
-            ]);
+                // Restricts (not just biases) results to this country, so
+                // a free-text query without a country name can't match a
+                // same-named place elsewhere in the world.
+                'components' => $countryCode ? 'country:'.strtoupper($countryCode) : null,
+            ]));
         } catch (Throwable $e) {
             Log::warning('Failed to reach the Google Geocoding API while geocoding a venue location.', [
                 'query' => $query,

@@ -100,11 +100,15 @@ class NominatimGeocoder
                 // Nominatim's usage policy requires a way to identify the
                 // application making requests.
                 'User-Agent' => config('app.name').' geocoder (+'.config('app.url').')',
-            ])->get(self::ENDPOINT, [
+            ])->get(self::ENDPOINT, array_filter([
                 'q' => $query,
                 'format' => 'jsonv2',
                 'limit' => 1,
-            ]);
+                // Restricts (not just biases) results to this country, so
+                // a free-text query without a country name can't match a
+                // same-named place elsewhere in the world.
+                'countrycodes' => config('app.geocode_country_code'),
+            ]));
         } catch (Throwable $e) {
             Log::warning('Failed to reach Nominatim while geocoding a venue location.', [
                 'query' => $query,

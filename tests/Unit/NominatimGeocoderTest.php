@@ -67,4 +67,34 @@ class NominatimGeocoderTest extends TestCase
         $this->assertNull($geocoder->geocode('Somewhere'));
         $this->assertFalse($geocoder->isCached('Somewhere'));
     }
+
+    public function test_it_restricts_the_query_to_the_configured_country(): void
+    {
+        config(['app.geocode_country_code' => 'gb']);
+
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([
+                ['lat' => '53.4084', 'lon' => '-2.9916'],
+            ]),
+        ]);
+
+        (new NominatimGeocoder)->geocode('White Hall, Derbyshire');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'countrycodes=gb'));
+    }
+
+    public function test_the_country_restriction_can_be_disabled(): void
+    {
+        config(['app.geocode_country_code' => '']);
+
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([
+                ['lat' => '53.4084', 'lon' => '-2.9916'],
+            ]),
+        ]);
+
+        (new NominatimGeocoder)->geocode('Liverpool');
+
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'countrycodes'));
+    }
 }

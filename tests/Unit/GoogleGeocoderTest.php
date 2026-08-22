@@ -101,4 +101,37 @@ class GoogleGeocoderTest extends TestCase
         $this->assertNull($geocoder->geocode('Somewhere'));
         $this->assertFalse($geocoder->isCached('Somewhere'));
     }
+
+    public function test_it_restricts_the_query_to_the_configured_country(): void
+    {
+        config(['services.google_maps.key' => 'test-key', 'app.geocode_country_code' => 'gb']);
+
+        Http::fake([
+            'maps.googleapis.com/*' => Http::response([
+                'status' => 'OK',
+                'results' => [
+                    ['geometry' => ['location' => ['lat' => 53.0, 'lng' => -1.5]]],
+                ],
+            ]),
+        ]);
+
+        (new GoogleGeocoder)->geocode('White Hall, Derbyshire');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'components=country%3AGB'));
+    }
+
+    public function test_the_country_restriction_can_be_disabled(): void
+    {
+        config(['services.google_maps.key' => 'test-key', 'app.geocode_country_code' => '']);
+
+        Http::fake([
+            'maps.googleapis.com/*' => Http::response(['status' => 'OK', 'results' => [
+                ['geometry' => ['location' => ['lat' => 53.0, 'lng' => -1.5]]],
+            ]]),
+        ]);
+
+        (new GoogleGeocoder)->geocode('Liverpool');
+
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'components'));
+    }
 }

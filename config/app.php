@@ -142,4 +142,12 @@ return [
     'map_tile_url_template' => env('APP_MAP_TILE_URL_TEMPLATE', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
     'map_tile_attribution' => env('APP_MAP_TILE_ATTRIBUTION', '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'),
 
+    // Venue locations are free text without a country name (e.g. "Cheadle,
+    // nr Stockport", "Derbyshire"), which without a restriction lets a
+    // geocoder match a same-named place anywhere in the world - e.g. a
+    // "Derbyshire" venue resolving to "Derbyshire Way" in Washington DC.
+    // This app's venues are all in a single country, so restrict geocoding
+    // to it; an ISO 3166-1 alpha-2 country code, or blank to disable.
+    'geocode_country_code' => env('APP_GEOCODE_COUNTRY_CODE', 'gb'),
+
 ];

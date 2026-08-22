@@ -44,7 +44,7 @@ readonly class Venue
 
         return new self(
             name: $values['Venue Name'],
-            website: $nameHyperlink ?? self::extractWebsite($values['Venue Name']),
+            website: self::normalizeHyperlink($nameHyperlink) ?? self::extractWebsite($values['Venue Name']),
             location: $values['Location'] ?? null,
             capacity: $values['Capacity'] ?? null,
             capacityCount: (int) filter_var($values['Capacity'] ?? '', FILTER_SANITIZE_NUMBER_INT),
@@ -61,6 +61,20 @@ readonly class Venue
             open: $open,
             slug: Str::slug($values['Venue Name']),
         );
+    }
+
+    /**
+     * A sheet-provided hyperlink is trusted as-is (unlike extractWebsite()'s
+     * anchored regex, real URLs often end in "/" or other non-word characters
+     * that regex deliberately rejects), but only once confirmed non-empty and
+     * http(s), so a stray mailto:/tel:/empty link doesn't end up rendered as
+     * the venue's website.
+     */
+    private static function normalizeHyperlink(?string $hyperlink): ?string
+    {
+        $hyperlink = trim($hyperlink ?? '');
+
+        return preg_match('#^https?://\S+$#i', $hyperlink) ? $hyperlink : null;
     }
 
     /**

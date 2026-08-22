@@ -57,7 +57,9 @@ class GoogleClient
             throw new RuntimeException("Failed to fetch venue sheet '{$this->sheetID}' (range {$range}): {$e->getMessage()}", previous: $e);
         }
 
-        $rowData = $result->getSheets()[0]->getData()[0]->getRowData() ?? [];
+        $sheets = $result->getSheets() ?? [];
+        $data = ($sheets[0] ?? null)?->getData() ?? [];
+        $rowData = ($data[0] ?? null)?->getRowData() ?? [];
 
         $sites = [];
         $nameHyperlinks = [];

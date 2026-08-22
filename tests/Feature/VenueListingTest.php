@@ -207,6 +207,24 @@ class VenueListingTest extends TestCase
         $this->assertNull($venues->firstWhere('name', 'Ordinary Venue Name')->website);
     }
 
+    public function test_list_venues_ignores_a_non_http_hyperlink_on_the_venue_name(): void
+    {
+        // A stray mailto:/tel: link (or an empty hyperlink string) shouldn't
+        // be trusted as a website just because the cell has some hyperlink.
+        $client = new FakeGoogleClient([
+            $this->rawVenueRow('Venue With A Mailto Link'),
+            $this->rawVenueRow('Venue With An Empty Hyperlink'),
+        ], nameHyperlinks: [
+            'mailto:someone@example.com',
+            '',
+        ]);
+
+        $venues = collect($client->listVenues());
+
+        $this->assertNull($venues->firstWhere('name', 'Venue With A Mailto Link')->website);
+        $this->assertNull($venues->firstWhere('name', 'Venue With An Empty Hyperlink')->website);
+    }
+
     public function test_the_venue_details_render_a_website_link_when_the_name_is_a_url(): void
     {
         app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([

@@ -38,12 +38,21 @@ function buildPopupContent(point) {
     return wrapper;
 }
 
-function pendingText(pending) {
-    if (pending === 0) {
+const INITIAL_LOADING_TEXT = 'Venue locations loading, 0%';
+
+// resolved = venues that are done either way (plotted or unmapped);
+// pending = venues still waiting on a future poll. Once nothing is
+// pending, loading is complete and no message is needed.
+function loadingText(resolved, pending) {
+    const total = resolved + pending;
+
+    if (pending === 0 || total === 0) {
         return '';
     }
 
-    return pending === 1 ? '1 venue is still being located…' : `${pending} venues are still being located…`;
+    const percent = Math.round((resolved / total) * 100);
+
+    return `Venue locations loading, ${percent}%`;
 }
 
 function buildUnmappedListItem(venue) {
@@ -123,13 +132,15 @@ async function loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, u
         return;
     }
 
+    const points = data.points || [];
     const unmapped = data.unmapped || [];
+    const pending = data.pending || 0;
 
-    renderMarkers(map, markerLayer, data.points || []);
+    renderMarkers(map, markerLayer, points);
     renderUnmappedList(unmappedListEl, unmapped);
 
     if (statusEl) {
-        const parts = [pendingText(data.pending || 0)];
+        const parts = [loadingText(points.length + unmapped.length, pending)];
 
         // No list element on this page (a venue's own map) to hold the
         // unmapped detail, so fold a plain-text summary into the status
@@ -145,7 +156,7 @@ async function loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, u
         statusEl.textContent = parts.filter(Boolean).join(' ');
     }
 
-    if ((data.pending || 0) > 0) {
+    if (pending > 0) {
         setTimeout(() => loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, url), POLL_INTERVAL_MS);
     }
 }
@@ -163,6 +174,10 @@ function initVenuesMap() {
 
     const statusEl = document.getElementById('map-status');
     const unmappedListEl = document.getElementById('map-unmapped');
+
+    if (statusEl) {
+        statusEl.textContent = INITIAL_LOADING_TEXT;
+    }
 
     const map = L.map(container).setView(UK_CENTRE, 5);
     const markerLayer = L.layerGroup().addTo(map);

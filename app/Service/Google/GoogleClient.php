@@ -35,7 +35,7 @@ class GoogleClient
     }
 
     /**
-     * @return array{0: array<int, string>, 1: array<int, array<int, string>>}
+     * @return array{0: array<int, string>, 1: array<int, array<int, string>>, 2: array<int, ?string>}
      */
     protected function getSheetData(): array
     {
@@ -45,12 +45,30 @@ class GoogleClient
         $range = 'Overnight Venue Site List!A:M'; // Adjust the range as needed
 
         try {
-            $result = $sheet->spreadsheets_values->get($this->sheetID, $range);
+            // Fetched via spreadsheets->get() rather than spreadsheets_values->get()
+            // because venue names in the sheet are usually plain text hyperlinked to
+            // the venue's website, not literal URLs - values.get() only exposes the
+            // display text, so the underlying link needs the cell metadata instead.
+            $result = $sheet->spreadsheets->get($this->sheetID, [
+                'ranges' => [$range],
+                'fields' => 'sheets.data.rowData.values(formattedValue,hyperlink)',
+            ]);
         } catch (GoogleServiceException $e) {
             throw new RuntimeException("Failed to fetch venue sheet '{$this->sheetID}' (range {$range}): {$e->getMessage()}", previous: $e);
         }
 
-        $sites = $result->getValues() ?? [];
+        $sheets = $result->getSheets() ?? [];
+        $data = ($sheets[0] ?? null)?->getData() ?? [];
+        $rowData = ($data[0] ?? null)?->getRowData() ?? [];
+
+        $sites = [];
+        $nameHyperlinks = [];
+        foreach ($rowData as $row) {
+            $cells = $row->getValues() ?? [];
+            $sites[] = array_map(fn ($cell) => $cell->getFormattedValue() ?? '', $cells);
+            $nameHyperlinks[] = ($cells[0] ?? null)?->getHyperlink();
+        }
+
         if (count($sites) < 2) {
             throw new RuntimeException("Venue sheet '{$this->sheetID}' returned fewer than 2 rows (expected a heading row and a spacer row); the sheet layout may have changed.");
         }
@@ -58,8 +76,10 @@ class GoogleClient
         $headings = array_shift($sites); // Remove the first row as headings
         $headings[0] = 'Venue Name'; // Rename the first heading to 'Venue Name'
         array_shift($sites); // Remove the second row as it is not needed
+        array_shift($nameHyperlinks); // Keep in step with $sites
+        array_shift($nameHyperlinks);
 
-        return [$headings, $sites];
+        return [$headings, $sites, $nameHyperlinks];
     }
 
     /**
@@ -67,8 +87,8 @@ class GoogleClient
      */
     public function listVenues(): array
     {
-        $cacheKey = 'venue.index.v4'; // Bump this suffix whenever the cached venue shape changes
-        $staleCacheKey = 'venue.index.v4.stale';
+        $cacheKey = 'venue.index.v5'; // Bump this suffix whenever the cached venue shape changes
+        $staleCacheKey = 'venue.index.v5.stale';
 
         $cached = $this->readVenueCache($cacheKey);
         if ($cached !== null) {
@@ -76,7 +96,7 @@ class GoogleClient
         }
 
         try {
-            [$headings, $sites] = $this->getSheetData();
+            [$headings, $sites, $nameHyperlinks] = $this->getSheetData();
         } catch (RuntimeException $e) {
             Log::error('Failed to refresh venue list from Google Sheets, falling back to stale cache if available.', [
                 'exception' => $e,
@@ -92,7 +112,7 @@ class GoogleClient
 
         $venues = [];
         $venue_open = true;
-        foreach ($sites as $site) {
+        foreach ($sites as $index => $site) {
             if (count($site) < 1 || ! $site[0]) {
                 continue; // Skip if the first column (Venue Name) is empty
             }
@@ -102,7 +122,7 @@ class GoogleClient
 
                 continue; // Skip this row as it indicates closed venues
             }
-            $venues[] = Venue::fromSheetRow($headings, $site, $venue_open);
+            $venues[] = Venue::fromSheetRow($headings, $site, $venue_open, $nameHyperlinks[$index] ?? null);
         }
         $venues = $this->sortVenuesByName($venues); // Sort venues by name
         $venues = $this->disambiguateSlugs($venues); // Ensure slugs are unique even if venue names collide

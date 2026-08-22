@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\VenueController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Vite;
 
 Route::get('/', [VenueController::class, 'index'])->name('home');
 Route::get('/venue/{slug}', [VenueController::class, 'show'])->name('venue.show');
+Route::get('/venue/{slug}/points', [VenueController::class, 'points'])->name('venue.points');
+Route::get('/map', [MapController::class, 'index'])->name('map.index');
+Route::get('/map/points', [MapController::class, 'points'])->name('map.points');
 
 Route::get('site.webmanifest', function () {
     $color = config('branding.colors.'.app()->environment(), config('branding.default_color'));

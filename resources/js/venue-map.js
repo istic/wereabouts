@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { bindFilterInputs, bindFilterReset, matchesFilters, readFilterState } from './venue-filters';
 
 // Leaflet's default marker icon URLs assume a classic (non-bundled) asset
 // layout; point it at the versioned URLs Vite generated for these images.
@@ -119,7 +120,7 @@ async function fetchPoints(url) {
     return response.json();
 }
 
-async function loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, url) {
+async function loadAndScheduleNext(statusEl, unmappedListEl, url, onPoints) {
     let data;
 
     try {
@@ -136,7 +137,7 @@ async function loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, u
     const unmapped = data.unmapped || [];
     const pending = data.pending || 0;
 
-    renderMarkers(map, markerLayer, points);
+    onPoints(points);
     renderUnmappedList(unmappedListEl, unmapped);
 
     if (statusEl) {
@@ -157,7 +158,7 @@ async function loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, u
     }
 
     if (pending > 0) {
-        setTimeout(() => loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, url), POLL_INTERVAL_MS);
+        setTimeout(() => loadAndScheduleNext(statusEl, unmappedListEl, url, onPoints), POLL_INTERVAL_MS);
     }
 }
 
@@ -174,6 +175,8 @@ function initVenuesMap() {
 
     const statusEl = document.getElementById('map-status');
     const unmappedListEl = document.getElementById('map-unmapped');
+    const filterCountEl = document.getElementById('map-filter-count');
+    const filterEmptyStateEl = document.getElementById('map-empty-state');
 
     if (statusEl) {
         statusEl.textContent = INITIAL_LOADING_TEXT;
@@ -187,7 +190,33 @@ function initVenuesMap() {
         attribution: container.dataset.tileAttribution || DEFAULT_TILE_ATTRIBUTION,
     }).addTo(map);
 
-    loadAndScheduleNext(map, markerLayer, statusEl, unmappedListEl, pointsUrl);
+    // The full set of geocoded venues fetched so far, independent of the
+    // currently active filters - re-filtered locally on every filter
+    // change without needing to re-fetch.
+    let latestPoints = [];
+
+    function applyFilters() {
+        const filters = readFilterState();
+        const visible = filters ? latestPoints.filter((point) => matchesFilters(point, filters)) : latestPoints;
+
+        renderMarkers(map, markerLayer, visible);
+
+        if (filterCountEl) {
+            filterCountEl.textContent = `Showing ${visible.length} of ${latestPoints.length} venues`;
+        }
+
+        if (filterEmptyStateEl) {
+            filterEmptyStateEl.classList.toggle('d-none', latestPoints.length === 0 || visible.length !== 0);
+        }
+    }
+
+    bindFilterInputs(applyFilters);
+    bindFilterReset(applyFilters);
+
+    loadAndScheduleNext(statusEl, unmappedListEl, pointsUrl, (points) => {
+        latestPoints = points;
+        applyFilters();
+    });
 }
 
 document.addEventListener('DOMContentLoaded', initVenuesMap);

@@ -13,6 +13,12 @@
     </div>
 
     <div class="row">
+        <div class="col-md-12 mb-4">
+            @include('venue._filters', ['countId' => 'map-filter-count'])
+        </div>
+    </div>
+
+    <div class="row">
         <div class="col-md-12 mb-3">
             <h1 class="h4">Venue map</h1>
             <p id="map-status" class="text-muted small mb-0" role="status" aria-live="polite"></p>
@@ -28,6 +34,9 @@
                 data-tile-attribution="{{ config('app.map_tile_attribution') }}"
                 style="height: 70vh;"
             ></div>
+            <p id="map-empty-state" class="text-muted text-center py-4 d-none" role="status">
+                No venues match your filters.
+            </p>
         </div>
     </div>
 

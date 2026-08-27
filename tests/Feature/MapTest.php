@@ -41,6 +41,25 @@ class MapTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_the_map_page_renders_the_same_filter_bar_as_the_venue_listing(): void
+    {
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([]));
+
+        Http::fake();
+
+        $response = $this->get(route('map.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('id="filter-name"', false);
+        $response->assertSee('id="filter-location"', false);
+        $response->assertSee('id="filter-capacity"', false);
+        $response->assertSee('id="filter-status"', false);
+        $response->assertSee('id="filter-public-transport"', false);
+        $response->assertSee('id="filter-disabled-bathrooms"', false);
+        $response->assertSee('id="filter-step-free"', false);
+        $response->assertSee('id="filter-reset"', false);
+    }
+
     public function test_it_plots_geocodable_venues_on_the_map(): void
     {
         app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
@@ -64,6 +83,29 @@ class MapTest extends TestCase
         $this->assertTrue($points[0]['open']);
         $this->assertSame(route('venue.show', 'abney-scout-and-guide-centre'), $points[0]['url']);
         $response->assertJson(['unmapped' => [], 'pending' => 0]);
+    }
+
+    public function test_each_point_includes_the_same_fields_the_venue_listing_filters_use(): void
+    {
+        app()->bind(GoogleClient::class, fn () => new FakeGoogleClient([
+            $this->rawVenueRow('Abney Scout and Guide Centre', 'Cheadle, nr Stockport'),
+        ]));
+
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([
+                ['lat' => '53.4084', 'lon' => '-2.9916'],
+            ]),
+        ]);
+
+        $response = $this->get(route('map.points'));
+
+        $response->assertStatus(200);
+        $points = $response->json('points');
+        $this->assertSame('Cheadle, nr Stockport', $points[0]['location']);
+        $this->assertSame(10, $points[0]['capacity']); // fixture's "sleeps 10"
+        $this->assertTrue($points[0]['publicTransport']); // fixture's "Yes"
+        $this->assertFalse($points[0]['disabledBathrooms']); // fixture's "No"
+        $this->assertTrue($points[0]['stepFree']); // fixture's "All spaces"
     }
 
     public function test_it_lists_venues_with_no_location_as_unmapped_without_geocoding_them(): void

@@ -18,7 +18,7 @@
         "concurrently": "^10.0.4",
         "laravel-vite-plugin": "^3.1.3",
         "leaflet": "^1.9.4",
-        "sass": "^1.102.0",
+        "sass": "^1.103.1",
         "sharp": "^0.35.3",
         "vite": "^8"
     },

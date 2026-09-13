@@ -3234,16 +3234,16 @@
         },
         {
             "name": "open-telemetry/opentelemetry-auto-laravel",
-            "version": "1.8.0",
+            "version": "1.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opentelemetry-php/contrib-auto-laravel.git",
-                "reference": "f0a750eeb0a69012d81c84010a4c7a7b61926e00"
+                "reference": "ec649e8bc7a938467b74db9876b856179a856bbc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/contrib-auto-laravel/zipball/f0a750eeb0a69012d81c84010a4c7a7b61926e00",
-                "reference": "f0a750eeb0a69012d81c84010a4c7a7b61926e00",
+                "url": "https://api.github.com/repos/opentelemetry-php/contrib-auto-laravel/zipball/ec649e8bc7a938467b74db9876b856179a856bbc",
+                "reference": "ec649e8bc7a938467b74db9876b856179a856bbc",
                 "shasum": ""
             },
             "require": {
@@ -3260,7 +3260,7 @@
                 "nunomaduro/collision": "*",
                 "open-telemetry/sdk": "^1.8",
                 "orchestra/testbench": ">=7.41.3",
-                "phan/phan": "^5.0",
+                "phan/phan": "^6.0",
                 "php-http/mock-client": "*",
                 "phpstan/phpstan": "^1.1",
                 "phpstan/phpstan-phpunit": "^1.0",
@@ -3297,9 +3297,9 @@
                 "tracing"
             ],
             "support": {
-                "source": "https://github.com/opentelemetry-php/contrib-auto-laravel/tree/1.8.0"
+                "source": "https://github.com/opentelemetry-php/contrib-auto-laravel/tree/1.9.0"
             },
-            "time": "2026-07-09T20:34:43+00:00"
+            "time": "2026-09-02T12:13:51+00:00"
         },
         {
             "name": "open-telemetry/sdk",
@@ -3403,16 +3403,16 @@
         },
         {
             "name": "open-telemetry/sem-conv",
-            "version": "1.38.0",
+            "version": "1.44.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opentelemetry-php/sem-conv.git",
-                "reference": "e613bc640a407def4991b8a936a9b27edd9a3240"
+                "reference": "c94bc7ebacef039cda4f4c9270807dcc58b4e3af"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/sem-conv/zipball/e613bc640a407def4991b8a936a9b27edd9a3240",
-                "reference": "e613bc640a407def4991b8a936a9b27edd9a3240",
+                "url": "https://api.github.com/repos/opentelemetry-php/sem-conv/zipball/c94bc7ebacef039cda4f4c9270807dcc58b4e3af",
+                "reference": "c94bc7ebacef039cda4f4c9270807dcc58b4e3af",
                 "shasum": ""
             },
             "require": {
@@ -3456,7 +3456,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2026-01-21T04:14:03+00:00"
+            "time": "2026-09-09T22:06:17+00:00"
         },
         {
             "name": "php-http/discovery",

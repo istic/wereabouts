@@ -10,7 +10,7 @@ ARG APP_ENV=production
 ENV APP_ENV=$APP_ENV
 RUN npm run build
 
-FROM php:8.5-fpm-alpine
+FROM php:8.6-fpm-alpine
 WORKDIR /var/www/html
 
 COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/bin/install-php-extensions
